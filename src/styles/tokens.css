@@ -1,0 +1,30 @@
+/* Design tokens: every color, font and shape lives here. No black anywhere. */
+:root {
+  --violet: #5b3df5;
+  --violet-light: #4a2fd9;
+  --violet-deep: #2e1f8f;
+  --coral: #ff6b4a;
+  --yellow: #ffe066;
+  --ink: #1e1650;
+  --muted: #5a5480;
+  --bg: #f5f3ff;
+  --border: #e4dffb;
+  --border-strong: #d6d0f5;
+  --white: #ffffff;
+
+  --cs-bg: #ede3ff; --cs-text: #5b2d9e;
+  --sp-bg: #ffe8d1; --sp-text: #8a4300;
+  --v-bg: #dce7ff;  --v-text: #1f3f99;
+  --ac-bg: #ddf3ea; --ac-text: #1e6b4a;
+  --mi-bg: #ffe0ec; --mi-text: #a3124f;
+
+  --font-en: 'Manrope', 'Noto Sans KR', system-ui, sans-serif;
+  --font-ko: 'Noto Sans KR', 'Manrope', system-ui, sans-serif;
+
+  --radius-button: 14px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  --page-width: 1120px;
+  --gutter: 16px;
+}

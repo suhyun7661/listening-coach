@@ -1,0 +1,74 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-en);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+[lang='ko'] { font-family: var(--font-ko); }
+
+h1, h2, h3 { margin: 0; line-height: 1.25; }
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+
+.page {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 32px var(--gutter) 64px;
+}
+.page__title { font-size: 28px; font-weight: 800; }
+.page__lead { margin: 8px 0 24px; color: var(--muted); }
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-button);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn--primary { background: var(--coral); color: var(--ink); }
+.btn--secondary { background: var(--violet-light); color: var(--white); }
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 10px 16px;
+  border-radius: var(--radius-button);
+  font-weight: 800;
+  z-index: 100;
+}
+.skip-link:focus { top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
