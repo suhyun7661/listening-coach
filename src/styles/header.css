@@ -86,3 +86,8 @@
   .header__logo { margin-right: 0; }
   .header__account { margin-left: auto; }
 }
+
+/* Account link (now a real link) */
+a.header__account { text-decoration: none; }
+.header__account--login { padding-left: 18px; background: var(--coral); color: var(--ink); }
+.header__account--login:hover { background: var(--yellow); }

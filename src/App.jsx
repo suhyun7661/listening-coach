@@ -9,6 +9,8 @@ import VocabQuiz from './pages/VocabQuiz';
 import Notebook from './pages/Notebook';
 import Admin from './pages/Admin';
 import History from './pages/History';
+import Login from './pages/Login';
+import Account from './pages/Account';
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
         <Route path="/review" element={<Review />} />
         <Route path="/review/:attemptId" element={<Review />} />
         <Route path="/history" element={<History />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/account" element={<Account />} />
         <Route path="/compete" element={<Compete />} />
         <Route path="/vocab" element={<VocabQuiz />} />
         <Route path="/notebook" element={<Notebook />} />

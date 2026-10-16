@@ -331,3 +331,17 @@
 .welcome__link { display: inline-block; margin-top: 18px; color: var(--violet); font-weight: 700; }
 .due__link { margin: -6px 0 12px; }
 .due__link a, .welcome__link { text-decoration: underline; }
+
+/* ---------- Login and account (Stage 9) ---------- */
+.page--narrow { max-width: 520px; }
+.form { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+.form__tabs { display: flex; gap: 8px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 700; border: 0; padding: 0; margin: 0; }
+.field input[type='text'], .field input[type='email'], .field input[type='password'] { font: inherit; font-weight: 500; min-height: 48px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-button); background: var(--white); color: var(--ink); }
+.field input:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+.field--set legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
+.chip:has(input:focus-visible) { outline: 3px solid var(--coral); outline-offset: 2px; }
+.chip { display: inline-flex; align-items: center; justify-content: center; }
+.form__error { margin: 0; padding: 10px 14px; border-radius: 10px; background: #fde7e5; color: #b42318; font-weight: 600; }
+.form__notice { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--ac-bg); color: var(--ac-text); font-weight: 600; }
+.form__skip { margin-top: 8px; }

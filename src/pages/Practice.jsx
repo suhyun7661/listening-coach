@@ -6,6 +6,7 @@ import HintedBlank from '../components/HintedBlank';
 import { clips, getClip } from '../data/clips';
 import { describeHints, getLevelRule } from '../lib/blanks';
 import { saveAttempt } from '../lib/attemptStore';
+import { useAuth } from '../lib/AuthContext';
 import { buildResults } from '../lib/errorTags';
 import { AUTO_ADVANCE_DELAY, useDictation } from '../lib/useDictation';
 import { formatTime, usePracticePlayer } from '../lib/usePracticePlayer';
@@ -23,6 +24,7 @@ export default function Practice() {
 function PracticeClip({ clip }) {
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  const { accent: userAccent } = useAuth();
   const fromUrl = Number(search.get('level'));
   const [level, setLevel] = useState(fromUrl >= 1 && fromUrl <= 6 ? fromUrl : clip.difficulty);
   const rule = getLevelRule(level);
@@ -39,9 +41,9 @@ function PracticeClip({ clip }) {
   const total = player.duration || 1;
   const pct = (t) => `${Math.min(100, (t / total) * 100)}%`;
   // Grade everything, remember it for the Review page, and go there.
-  // The learner's own accent is assumed to be US until accounts exist (Stage 9).
+  // userAccent comes from the learner's account (US if they are not signed in).
   function submit() {
-    const results = buildResults(clip.sentences, tokensBySentence, dictation.answers, { clipAccent: clip.accent, userAccent: 'US' });
+    const results = buildResults(clip.sentences, tokensBySentence, dictation.answers, { clipAccent: clip.accent, userAccent });
     const id = saveAttempt({ clipId: clip.id, title: clip.title, level, speed: player.speed, results });
     navigate(`/review/${id}`);
   }

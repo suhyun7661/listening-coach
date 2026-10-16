@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom';
-import { user } from '../data/sampleData';
+import { useAuth } from '../lib/AuthContext';
 
 const MENU = [
   { to: '/', label: 'Library', end: true },
@@ -20,6 +20,8 @@ function HeadphonesIcon() {
 }
 
 export default function Header() {
+  const { user, profile, loading } = useAuth();
+  const name = profile?.display_name ?? user?.email?.split('@')[0] ?? '';
   return (
     <header className="header">
       <div className="header__inner">
@@ -42,10 +44,14 @@ export default function Header() {
             ))}
           </ul>
         </nav>
-        <button type="button" className="header__account" aria-label={`Account: ${user.name}`}>
-          <span className="header__avatar" aria-hidden="true">{user.initial}</span>
-          <span lang="ko">{user.name}</span>
-        </button>
+        {user ? (
+          <Link to="/account" className="header__account" aria-label={`Your account: ${name}`}>
+            <span className="header__avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+            <span lang="ko">{name}</span>
+          </Link>
+        ) : (
+          !loading && <Link to="/login" className="header__account header__account--login">Log in</Link>
+        )}
       </div>
     </header>
   );
