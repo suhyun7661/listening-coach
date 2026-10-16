@@ -96,7 +96,7 @@ export default function Library() {
                 <span className="pill pill--accent">{clip.accent}</span>
                 <span className="pill">Level {clip.level}</span>
               </div>
-              <Link to="/practice" className="clip__start">Start practice</Link>
+              <Link to={`/practice/${clip.id}`} className="clip__start">Start practice</Link>
             </div>
           </li>
         ))}

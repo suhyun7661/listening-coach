@@ -15,7 +15,8 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Library />} />
         <Route path="/practice" element={<Practice />} />
-        <Route path="/practice/review" element={<Review />} />
+        <Route path="/practice/:clipId" element={<Practice />} />
+        <Route path="/review" element={<Review />} />
         <Route path="/compete" element={<Compete />} />
         <Route path="/vocab" element={<VocabQuiz />} />
         <Route path="/notebook" element={<Notebook />} />
