@@ -14,6 +14,10 @@
 - "Works on phones" only means the website layout is responsive when opened in a phone's browser.
 - Design for laptop/desktop browsers first, then make sure the same site adapts to smaller screens.
 
+## Local-only for now
+- Do NOT deploy or publish the site (Vercel or anywhere else) until I explicitly say so. Develop and test locally (`npm run dev`).
+- Stage 7 (Deploy to Vercel) is on hold. `vercel.json` is already prepared and stays unused. Continue with the other stages; ask me before deploying.
+
 ## Product
 A website that trains Korean learners to understand fast, natural English through fill-in-the-blank dictation on video clips.
 Main weaknesses it targets: speed (SP), unfamiliar vocabulary (V), connected speech (CS).
