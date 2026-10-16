@@ -302,3 +302,8 @@
 @media (prefers-reduced-motion: reduce) { .countdown__bar { animation: none !important; } }
 .level-pick { display: inline-flex; align-items: center; gap: 8px; background: var(--violet); color: var(--yellow); border-radius: var(--radius-pill); padding: 4px 6px 4px 14px; font-weight: 700; font-size: 14px; }
 .level-pick select { font: inherit; font-weight: 800; border: 0; border-radius: var(--radius-pill); padding: 4px 8px; background: var(--white); color: var(--ink); min-height: 32px; }
+
+/* Hint under a blank: first letter and letter count stay visible while typing */
+.blank-wrap { position: relative; }
+.blank-wrap__hint { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; text-align: center; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); white-space: nowrap; pointer-events: none; }
+.sentence { row-gap: 34px; padding-bottom: 20px; }

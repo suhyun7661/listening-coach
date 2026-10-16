@@ -6,6 +6,12 @@ const HintedBlank = forwardRef(function HintedBlank({ blank, value, onChange, on
   const { hint } = blank;
   // Without a letter-count hint, every blank has the same width so it doesn't give the answer away.
   const width = hint.letterCount ? Math.max(4, hint.letterCount + 2) : 9;
+  // The hint (e.g. "g _ _ _") is its own line under the blank, so it stays visible while typing.
+  const pattern = hintPattern(hint);
+  const spoken = [
+    hint.firstLetter && `starts with ${hint.firstLetter}`,
+    hint.letterCount && `${hint.letterCount} letters`,
+  ].filter(Boolean).join(', ');
 
   return (
     <span className="blank-wrap">
@@ -21,14 +27,14 @@ const HintedBlank = forwardRef(function HintedBlank({ blank, value, onChange, on
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder={hintPattern(hint)}
-        aria-label={label}
+        aria-label={spoken ? `${label}, ${spoken}` : label}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
         style={{ width: `${width}ch`, minWidth: 0 }}
       />
+      {pattern && <span className="blank-wrap__hint" aria-hidden="true">{pattern}</span>}
     </span>
   );
 });
