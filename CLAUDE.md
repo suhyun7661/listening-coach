@@ -8,6 +8,12 @@
 - When something needs my action (making an account, pasting a secret key), tell me exactly what to click and where.
 - After each stage: run the app, check it builds without errors, then make a git commit with a clear message.
 
+## Permanent requirement: this is a WEBSITE
+- Listening Coach is a website that runs in a web browser. It is NOT a mobile phone app.
+- Never build or suggest a native/mobile app (no React Native, Expo, Capacitor, app stores, or app installs) unless I explicitly change this rule.
+- "Works on phones" only means the website layout is responsive when opened in a phone's browser.
+- Design for laptop/desktop browsers first, then make sure the same site adapts to smaller screens.
+
 ## Product
 A website that trains Korean learners to understand fast, natural English through fill-in-the-blank dictation on video clips.
 Main weaknesses it targets: speed (SP), unfamiliar vocabulary (V), connected speech (CS).
