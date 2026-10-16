@@ -2,33 +2,41 @@ import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PlayIcon, Icon } from '../components/Common';
 import VideoPlayer from '../components/VideoPlayer';
+import HintedBlank from '../components/HintedBlank';
 import { clips, getClip } from '../data/clips';
+import { describeHints, getLevelRule } from '../lib/blanks';
+import { AUTO_ADVANCE_DELAY, useDictation } from '../lib/useDictation';
 import { formatTime, usePracticePlayer } from '../lib/usePracticePlayer';
 
 const SPEEDS = [0.5, 0.75, 1, 1.25];
+const LEVELS = [1, 2, 3, 4, 5, 6];
 
 export default function Practice() {
   const { clipId } = useParams();
   const clip = getClip(clipId) ?? clips[0];
-  // Levels 1-2 show a Korean scene summary. For now the level is the clip's own level.
-  const level = clip.difficulty;
+  // key: opening another clip starts a fresh page state
+  return <PracticeClip key={clip.id} clip={clip} />;
+}
 
-  const [index, setIndex] = useState(0);
-  const [visited, setVisited] = useState([0]);
-  const sentence = clip.sentences[index];
+function PracticeClip({ clip }) {
+  const [level, setLevel] = useState(clip.difficulty);
+  const rule = getLevelRule(level);
+
+  const dictation = useDictation(clip.sentences, level);
+  const { current, tokensBySentence, currentAnswers, finished, inputRefs } = dictation;
+  const sentence = clip.sentences[current];
 
   // The player reads the sentence on screen from this ref.
   const sentenceRef = useRef(sentence);
   sentenceRef.current = sentence;
   const player = usePracticePlayer(sentenceRef);
 
-  function goTo(i) {
-    setIndex(i);
-    setVisited((v) => (v.includes(i) ? v : [...v, i]));
-  }
-
   const total = player.duration || 1;
   const pct = (t) => `${Math.min(100, (t / total) * 100)}%`;
+  const isLast = current === clip.sentences.length - 1;
+
+  let blankCounter = -1;
+  inputRefs.current = [];
 
   return (
     <div className="page">
@@ -37,7 +45,12 @@ export default function Practice() {
         <h1 className="page__title">{clip.title}</h1>
         <div className="practice-head__pills">
           <span className="pill pill--accent">{clip.accent} accent</span>
-          <span className="pill pill--violet">Level {level}</span>
+          <label className="level-pick">
+            <span>Level</span>
+            <select value={level} onChange={(e) => setLevel(Number(e.target.value))}>
+              {LEVELS.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
           <span className="pill pill--outline">Practice mode</span>
         </div>
       </div>
@@ -84,15 +97,54 @@ export default function Practice() {
             </div>
           </section>
 
-          <section className="card sentence-card" aria-label="Current sentence">
+          <section className="card sentence-card" aria-label="Dictation">
             <div className="sentence-card__head">
-              <h2>Sentence {index + 1} of {clip.sentences.length}</h2>
-              <span className="muted">{formatTime(sentence.start)} – {formatTime(sentence.end)}</span>
+              <h2>{finished ? 'All sentences filled in' : `Sentence ${current + 1} of ${clip.sentences.length}`}</h2>
+              <span className="muted">Level {level} hints: {describeHints(level)}</span>
             </div>
-            <p className="muted sentence-card__todo">The fill-in-the-blank boxes arrive in Stage 5. For now you can practise the video controls.</p>
+
+            {finished ? (
+              <p className="sentence-card__done">Check any sentence with the numbers on the right, or submit now to see your results.</p>
+            ) : (
+              <p className="sentence">
+                {tokensBySentence[current].map((token) => {
+                  if (token.type === 'text') return <span key={token.index}>{token.raw}</span>;
+                  blankCounter += 1;
+                  const n = blankCounter;
+                  return (
+                    <span key={token.index} className="sentence__word">
+                      {token.before}
+                      <HintedBlank
+                        ref={(el) => { inputRefs.current[n] = el; }}
+                        blank={token}
+                        value={currentAnswers[n] ?? ''}
+                        onChange={(v) => dictation.updateAnswer(n, v)}
+                        onKeyDown={(e) => dictation.handleKeyDown(e, n)}
+                        label={`Blank ${n + 1} of ${currentAnswers.length}`}
+                      />
+                      {token.after}
+                    </span>
+                  );
+                })}
+              </p>
+            )}
+
+            <div className="countdown" aria-live="polite">
+              {dictation.pending && !finished && (
+                <>
+                  <span className="countdown__bar" key={dictation.countdownKey} style={{ animationDuration: `${AUTO_ADVANCE_DELAY}ms` }} />
+                  <span className="countdown__text">
+                    {isLast ? 'Last sentence done. Press Enter to finish.' : 'Next sentence coming up. Keep typing to stay, or press Enter to go now.'}
+                  </span>
+                </>
+              )}
+            </div>
+
             <div className="sentence-card__foot">
-              <button type="button" className="btn btn--outline" disabled={index === 0} onClick={() => goTo(index - 1)}>Previous</button>
-              <button type="button" className="btn btn--primary" disabled={index === clip.sentences.length - 1} onClick={() => goTo(index + 1)}>Next sentence</button>
+              <button type="button" className="btn btn--outline" disabled={current === 0 && !finished} onClick={() => dictation.goTo(finished ? current : current - 1)}>Previous</button>
+              <button type="button" className="btn btn--primary" disabled={finished} onClick={dictation.advance}>
+                {isLast ? 'Finish' : 'Next sentence'}
+              </button>
             </div>
           </section>
         </div>
@@ -102,10 +154,10 @@ export default function Practice() {
             <h2 id="tracker-h" className="side-title">Sentences</h2>
             <ol className="tracker">
               {clip.sentences.map((s, i) => {
-                const state = i === index ? 'current' : visited.includes(i) ? 'done' : 'todo';
+                const state = i === current && !finished ? 'current' : dictation.sentenceDone(i) ? 'done' : 'todo';
                 return (
                   <li key={s.id}>
-                    <button type="button" className={`tracker__btn is-${state}`} aria-current={state === 'current' ? 'step' : undefined} onClick={() => goTo(i)}>{i + 1}</button>
+                    <button type="button" className={`tracker__btn is-${state}`} aria-current={state === 'current' ? 'step' : undefined} aria-label={`Sentence ${i + 1}`} onClick={() => dictation.goTo(i)}>{i + 1}</button>
                   </li>
                 );
               })}
@@ -117,7 +169,7 @@ export default function Practice() {
             </p>
           </section>
 
-          {level <= 2 && (
+          {rule.sceneSummary && (
             <section className="summary-card">
               <h2 className="summary-card__title">Scene summary</h2>
               <p lang="ko" className="summary-card__ko">{clip.contextKo}</p>

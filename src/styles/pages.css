@@ -289,3 +289,16 @@
 .player__notice--top { top: 16px; bottom: auto; background: var(--violet-light); border-radius: 10px; padding: 8px 12px; }
 .sentence-card__todo { margin: 24px 0; }
 .btn:disabled { opacity: 0.45; cursor: default; }
+
+/* ---------- Dictation (Stage 5) ---------- */
+.sentence__word { display: inline-flex; align-items: flex-end; }
+.blank-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+.blank-wrap__meaning { font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--violet); background: #eeeaff; border-radius: var(--radius-pill); padding: 2px 10px; max-width: 14em; text-align: center; }
+.sentence-card__done { margin: 24px 0; font-size: 18px; }
+.countdown { min-height: 44px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.countdown__bar { display: block; height: 6px; border-radius: var(--radius-pill); background: var(--coral); transform-origin: left; animation: countdown linear forwards; }
+.countdown__text { font-size: 14px; font-weight: 600; color: var(--muted); }
+@keyframes countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .countdown__bar { animation: none !important; } }
+.level-pick { display: inline-flex; align-items: center; gap: 8px; background: var(--violet); color: var(--yellow); border-radius: var(--radius-pill); padding: 4px 6px 4px 14px; font-weight: 700; font-size: 14px; }
+.level-pick select { font: inherit; font-weight: 800; border: 0; border-radius: var(--radius-pill); padding: 4px 8px; background: var(--white); color: var(--ink); min-height: 32px; }
