@@ -1,24 +1,42 @@
-// Keeps the most recent attempt in the browser tab so the Review page can show it
-// (and survive a refresh). Saving attempts to the database comes in Stage 10.
-const KEY = 'lc-last-attempt';
+// Keeps every graded attempt (newest first) in this browser, so earlier reports can be
+// opened again and added up. In Stage 10 these move to the Supabase database.
+const KEY = 'lc-attempts';
+const MAX = 200;
 
+function readAll() {
+  try {
+    const list = JSON.parse(localStorage.getItem(KEY));
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAll(list) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
+  } catch {
+    // Storage can be full or blocked; the report still shows for this visit.
+  }
+}
+
+// Adds a new report and returns its id.
 export function saveAttempt(attempt) {
-  try {
-    sessionStorage.setItem(KEY, JSON.stringify({ ...attempt, userTags: attempt.userTags ?? {} }));
-  } catch {
-    // Storage can be blocked; the Review page then shows its "no attempt" message.
-  }
+  const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  writeAll([{ ...attempt, id, createdAt: new Date().toISOString(), userTags: {} }, ...readAll()]);
+  return id;
 }
 
-export function loadAttempt() {
-  try {
-    return JSON.parse(sessionStorage.getItem(KEY));
-  } catch {
-    return null;
-  }
+export function loadAttempts() {
+  return readAll();
 }
 
-export function saveUserTags(userTags) {
-  const attempt = loadAttempt();
-  if (attempt) saveAttempt({ ...attempt, userTags });
+// With no id, returns the most recent report.
+export function loadAttempt(id) {
+  const list = readAll();
+  return id ? list.find((a) => a.id === id) ?? null : list[0] ?? null;
+}
+
+export function saveUserTags(id, userTags) {
+  writeAll(readAll().map((a) => (a.id === id ? { ...a, userTags } : a)));
 }

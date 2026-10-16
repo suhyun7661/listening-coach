@@ -1,14 +1,14 @@
 import { CATEGORIES, mainWeakness } from '../lib/errorTags';
 
 // The five categories as bars, with the main weakness underneath.
-export default function ErrorSummary({ counts }) {
+export default function ErrorSummary({ counts, title = 'Why you missed them', scope = 'in this clip' }) {
   const max = Math.max(1, ...Object.values(counts));
   const main = mainWeakness(counts);
   const mainCategory = CATEGORIES.find((c) => c.id === main);
 
   return (
     <section className="card" aria-labelledby="why-h">
-      <h2 id="why-h" className="side-title">Why you missed them</h2>
+      <h2 id="why-h" className="side-title">{title}</h2>
       <ul className="bars">
         {CATEGORIES.map((c) => (
           <li key={c.id} className="bars__row">
@@ -22,9 +22,9 @@ export default function ErrorSummary({ counts }) {
       </ul>
       <p className="bars__main">
         {mainCategory ? (
-          <>Main weakness in this clip: <strong>{mainCategory.label} ({mainCategory.id})</strong> <span lang="ko">{mainCategory.ko}</span></>
+          <>Main weakness {scope}: <strong>{mainCategory.label} ({mainCategory.id})</strong> <span lang="ko">{mainCategory.ko}</span></>
         ) : (
-          'No missed words in this clip.'
+          `No missed words ${scope}.`
         )}
       </p>
       <p className="muted">Tags are guessed automatically (marked “suggested”). Tap another tag on any word to change it.</p>

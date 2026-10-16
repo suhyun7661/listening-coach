@@ -46,6 +46,7 @@ export default function Library() {
               </li>
             ))}
           </ul>
+          <Link to="/history" className="welcome__link">See your past reports</Link>
         </section>
 
         <section className="mode-panel" aria-labelledby="mode-h">

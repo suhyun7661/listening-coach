@@ -42,8 +42,8 @@ function PracticeClip({ clip }) {
   // The learner's own accent is assumed to be US until accounts exist (Stage 9).
   function submit() {
     const results = buildResults(clip.sentences, tokensBySentence, dictation.answers, { clipAccent: clip.accent, userAccent: 'US' });
-    saveAttempt({ clipId: clip.id, title: clip.title, level, speed: player.speed, results });
-    navigate('/review');
+    const id = saveAttempt({ clipId: clip.id, title: clip.title, level, speed: player.speed, results });
+    navigate(`/review/${id}`);
   }
 
   const isLast = current === clip.sentences.length - 1;
@@ -60,7 +60,7 @@ function PracticeClip({ clip }) {
           <span className="pill pill--accent">{clip.accent} accent</span>
           <label className="level-pick">
             <span>Level</span>
-            <select value={level} onChange={(e) => setLevel(Number(e.target.value))}>
+            <select value={level} onChange={(e) => { setLevel(Number(e.target.value)); e.target.blur(); }}>
               {LEVELS.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </label>
@@ -74,7 +74,7 @@ function PracticeClip({ clip }) {
             <div className="player__video">
               <VideoPlayer clip={clip} handlers={player.handlers} />
               {!player.playing && (
-                <button type="button" className="player__play" aria-label="Play video" onClick={player.togglePlay} disabled={!player.ready}>
+                <button type="button" className="player__play" aria-label="Play video" onClick={() => { player.togglePlay(); dictation.focusBlank(); }} disabled={!player.ready}>
                   <PlayIcon size={34} />
                 </button>
               )}
@@ -89,19 +89,19 @@ function PracticeClip({ clip }) {
             </div>
             <div className="player__controls">
               {player.playing && (
-                <button type="button" className="btn btn--outline" onClick={player.togglePlay}>Pause</button>
+                <button type="button" className="btn btn--outline" onClick={() => { player.togglePlay(); dictation.focusBlank(); }}>Pause</button>
               )}
-              <button type="button" className="btn btn--secondary" onClick={player.replay} disabled={!player.ready}>
+              <button type="button" className="btn btn--secondary" onClick={() => { player.replay(); dictation.focusBlank(); }} disabled={!player.ready}>
                 <Icon name="replay" /> Replay sentence
               </button>
-              <button type="button" className={`btn btn--outline${player.loop ? ' is-on' : ''}`} aria-pressed={player.loop} onClick={player.toggleLoop} disabled={!player.ready}>
+              <button type="button" className={`btn btn--outline${player.loop ? ' is-on' : ''}`} aria-pressed={player.loop} onClick={() => { player.toggleLoop(); dictation.focusBlank(); }} disabled={!player.ready}>
                 <Icon name="loop" /> Loop sentence
               </button>
               <div className="speed" role="group" aria-label="Speed">
                 <span className="speed__label">Speed</span>
                 <div className="speed__options">
                   {SPEEDS.map((s) => (
-                    <button key={s} type="button" className={`speed__btn${player.speed === s ? ' is-selected' : ''}`} aria-pressed={player.speed === s} onClick={() => player.setSpeed(s)}>
+                    <button key={s} type="button" className={`speed__btn${player.speed === s ? ' is-selected' : ''}`} aria-pressed={player.speed === s} onClick={() => { player.setSpeed(s); dictation.focusBlank(); }}>
                       {s}x
                     </button>
                   ))}

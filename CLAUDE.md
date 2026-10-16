@@ -96,7 +96,7 @@ Levels (each level up removes one kind of hint; hints appear automatically, no h
 
 - Blank priority: key expressions, then small fast words, then connected-speech words, then other content words. Use a seeded random so the same sentence and level always give the same blanks.
 - Without a letter-count hint, all blanks have the same width.
-- Automatic progression: one sentence at a time. When every blank has text, show a 2-second countdown bar, then show the next sentence and focus its first blank. Typing restarts the countdown. Enter moves to the next empty blank, or advances immediately when all are filled. Revisiting a finished sentence never auto-advances unless edited. After the last sentence, wait for the user to press Submit.
+- Automatic progression: one sentence at a time. When every blank has text, show a 2-second countdown bar, then show the next sentence and focus its first blank. Typing restarts the countdown. Enter moves to the next blank in the sentence (after the last blank it goes to the first empty one), or advances immediately when all are filled. The cursor is always ready in a blank: it returns there after Replay/Loop/speed clicks, and typing with nothing focused jumps into the blank. Revisiting a finished sentence never auto-advances unless edited. After the last sentence, wait for the user to press Submit.
 - Never pause or control the video when sentences change.
 - Korean translation of whole sentences only appears after grading.
 - Grading: ignore case and punctuation; accept contractions and equivalents (gonna = going to, I'm = I am); a one-letter typo on 5+ letter words = 0.5 point ("almost"); empty = wrong.

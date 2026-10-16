@@ -321,3 +321,13 @@
 .script__list { margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 10px; }
 .script__ko { display: block; color: var(--violet); }
 @media (max-width: 520px) { .bars__row { grid-template-columns: 130px 1fr 20px; } }
+
+/* ---------- Report history ---------- */
+.history-title { margin-top: 32px; }
+.history-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.history-row__title { margin: 0; font-size: 18px; font-weight: 800; }
+.history-row__side { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.history-row__score { font-size: 28px; font-weight: 800; color: var(--violet); }
+.welcome__link { display: inline-block; margin-top: 18px; color: var(--violet); font-weight: 700; }
+.due__link { margin: -6px 0 12px; }
+.due__link a, .welcome__link { text-decoration: underline; }

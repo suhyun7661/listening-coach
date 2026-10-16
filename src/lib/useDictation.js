@@ -65,12 +65,41 @@ export function useDictation(sentences, level) {
     return () => clearTimeout(timer.current);
   }, [currentAnswers, edited, allFilled, finished, advance]);
 
-  // Put the cursor in the first blank of each new sentence.
+  // Put the cursor in the first empty blank (or the first blank if all are filled).
+  // Other buttons (Replay, speed...) call this too, so the learner can keep typing at once.
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const focusBlank = useCallback(() => {
+    setTimeout(() => {
+      const list = answersRef.current[current] ?? [];
+      const firstEmpty = list.findIndex((a) => !a.trim());
+      const el = inputRefs.current[firstEmpty === -1 ? 0 : firstEmpty];
+      el?.focus({ preventScroll: true });
+    }, 0);
+  }, [current]);
+
+  // Cursor goes to the blank for each new sentence, level or clip.
   useEffect(() => {
     if (finished) return undefined;
     const id = setTimeout(() => inputRefs.current[0]?.focus({ preventScroll: true }), 0);
     return () => clearTimeout(id);
   }, [current, finished, tokensBySentence]);
+
+  // Safety net: if the learner starts typing while a button or the page has focus,
+  // jump into the blank first so the letter lands there.
+  useEffect(() => {
+    if (finished) return undefined;
+    function onKey(e) {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const list = answersRef.current[current] ?? [];
+      const firstEmpty = list.findIndex((a) => !a.trim());
+      inputRefs.current[firstEmpty === -1 ? 0 : firstEmpty]?.focus({ preventScroll: true });
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [current, finished]);
 
   const updateAnswer = useCallback(
     (blankNumber, value) => {
@@ -80,7 +109,8 @@ export function useDictation(sentences, level) {
     [current]
   );
 
-  // Enter: next empty blank, or move on at once when everything is filled.
+  // Enter: go to the next blank in the sentence. After the last blank it goes to the first
+  // blank that is still empty. When every blank is filled it moves on to the next sentence.
   const handleKeyDown = useCallback(
     (e, blankNumber) => {
       if (e.key !== 'Enter') return;
@@ -89,9 +119,11 @@ export function useDictation(sentences, level) {
         advance();
         return;
       }
-      const next = currentAnswers.findIndex((a, i) => i > blankNumber && !a.trim());
-      const firstEmpty = currentAnswers.findIndex((a) => !a.trim());
-      inputRefs.current[next !== -1 ? next : firstEmpty]?.focus();
+      const isLastBlank = blankNumber + 1 >= currentAnswers.length;
+      const target = isLastBlank ? currentAnswers.findIndex((a) => !a.trim()) : blankNumber + 1;
+      const el = inputRefs.current[target];
+      el?.focus();
+      el?.select();
     },
     [allFilled, advance, currentAnswers]
   );
@@ -100,6 +132,6 @@ export function useDictation(sentences, level) {
 
   return {
     tokensBySentence, current, answers, currentAnswers, finished, pending, countdownKey,
-    inputRefs, goTo, advance, updateAnswer, handleKeyDown, sentenceDone,
+    inputRefs, focusBlank, goTo, advance, updateAnswer, handleKeyDown, sentenceDone,
   };
 }

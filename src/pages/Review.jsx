@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import ErrorSummary from '../components/ErrorSummary';
 import ErrorTagPicker from '../components/ErrorTagPicker';
 import { Tag } from '../components/Common';
@@ -8,7 +8,8 @@ import { isMiss } from '../lib/grading';
 import { loadAttempt, saveUserTags } from '../lib/attemptStore';
 
 export default function Review() {
-  const [attempt] = useState(loadAttempt);
+  const { attemptId } = useParams();
+  const [attempt] = useState(() => loadAttempt(attemptId));
   const [userTags, setUserTags] = useState(attempt?.userTags ?? {});
   const [showScript, setShowScript] = useState(false);
 
@@ -21,7 +22,8 @@ export default function Review() {
     return (
       <div className="page">
         <h1 className="page__title">Review</h1>
-        <p className="page__lead">There is nothing to review yet. Finish a practice clip and press “Submit clip for grading”.</p>
+        <p className="page__lead">{attemptId ? 'That report could not be found in this browser.' : 'There is nothing to review yet. Finish a practice clip and press “Submit clip for grading”.'}</p>
+        <Link to="/history" className="btn btn--outline">All past reports</Link>{' '}
         <Link to="/" className="btn btn--primary">Go to the library</Link>
       </div>
     );
@@ -31,7 +33,7 @@ export default function Review() {
   function setTag(blankId, tag) {
     const next = { ...userTags, [blankId]: tag };
     setUserTags(next);
-    saveUserTags(next);
+    saveUserTags(attempt.id, next);
   }
 
   const nextLevel = Math.min(6, attempt.level + 1);
@@ -56,6 +58,7 @@ export default function Review() {
           <h2 id="next-h" className="side-title">Next steps</h2>
           <div className="stack">
             <Link to="/vocab" className="btn btn--primary btn--block">Start vocab quiz</Link>
+            <Link to="/history" className="btn btn--outline btn--block">All past reports</Link>
             <button type="button" className="btn btn--outline btn--block" aria-expanded={showScript} onClick={() => setShowScript(!showScript)}>
               Full script (English + Korean)
             </button>

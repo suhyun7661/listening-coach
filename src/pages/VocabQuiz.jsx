@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Icon, Tag } from '../components/Common';
 import { quizSample as q } from '../data/sampleData';
 
@@ -61,6 +62,7 @@ export default function VocabQuiz() {
         <aside className="practice-side">
           <section className="card" aria-labelledby="due-h">
             <h2 id="due-h" className="side-title">Due for review today</h2>
+            <p className="muted due__link"><Link to="/history">Open your past reports</Link></p>
             <ul className="due">
               {q.due.map((d) => (
                 <li key={d.text} className="due__item">
