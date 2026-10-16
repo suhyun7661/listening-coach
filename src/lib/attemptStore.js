@@ -40,3 +40,7 @@ export function loadAttempt(id) {
 export function saveUserTags(id, userTags) {
   writeAll(readAll().map((a) => (a.id === id ? { ...a, userTags } : a)));
 }
+
+export function removeAttempt(id) {
+  writeAll(readAll().filter((a) => a.id !== id));
+}

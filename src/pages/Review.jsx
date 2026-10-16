@@ -1,39 +1,66 @@
-import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import ErrorSummary from '../components/ErrorSummary';
 import ErrorTagPicker from '../components/ErrorTagPicker';
 import { Tag } from '../components/Common';
 import { allBlanks, computeScore, finalTag, summarizeTags } from '../lib/errorTags';
 import { isMiss } from '../lib/grading';
-import { loadAttempt, saveUserTags } from '../lib/attemptStore';
+import { getAttempt, setUserTag } from '../lib/attempts';
+import { useAuth } from '../lib/AuthContext';
 
 export default function Review() {
   const { attemptId } = useParams();
-  const [attempt] = useState(() => loadAttempt(attemptId));
-  const [userTags, setUserTags] = useState(attempt?.userTags ?? {});
+  const location = useLocation();
+  const auth = useAuth();
+  const [attempt, setAttempt] = useState(undefined); // undefined = loading, null = not found
+  const [userTags, setUserTags] = useState({});
   const [showScript, setShowScript] = useState(false);
+  const [tagError, setTagError] = useState('');
+
+  useEffect(() => {
+    if (auth.loading) return undefined;
+    let alive = true;
+    getAttempt(auth.user, attemptId)
+      .then((a) => {
+        if (!alive) return;
+        setAttempt(a);
+        setUserTags(a?.userTags ?? {});
+      })
+      .catch(() => alive && setAttempt(null));
+    return () => {
+      alive = false;
+    };
+  }, [auth.loading, auth.user, attemptId]);
 
   const results = attempt?.results ?? [];
   const score = useMemo(() => computeScore(results), [results]);
   const almost = useMemo(() => allBlanks(results).filter((b) => b.status === 'almost').length, [results]);
   const counts = useMemo(() => summarizeTags(results, userTags), [results, userTags]);
 
+  if (attempt === undefined) {
+    return <div className="page"><p className="muted">Loading your report…</p></div>;
+  }
   if (!attempt) {
     return (
       <div className="page">
         <h1 className="page__title">Review</h1>
-        <p className="page__lead">{attemptId ? 'That report could not be found in this browser.' : 'There is nothing to review yet. Finish a practice clip and press “Submit clip for grading”.'}</p>
+        <p className="page__lead">{attemptId ? 'That report could not be found.' : 'There is nothing to review yet. Finish a practice clip and press “Submit clip for grading”.'}</p>
         <Link to="/history" className="btn btn--outline">All past reports</Link>{' '}
         <Link to="/" className="btn btn--primary">Go to the library</Link>
       </div>
     );
   }
 
-  // The user's choice is stored next to the automatic guess (userTag vs autoTag).
-  function setTag(blankId, tag) {
+  // The learner's choice is stored next to the automatic guess (userTag vs autoTag).
+  async function setTag(blankId, tag) {
     const next = { ...userTags, [blankId]: tag };
     setUserTags(next);
-    saveUserTags(attempt.id, next);
+    setTagError('');
+    try {
+      await setUserTag(auth.user, attempt, blankId, next);
+    } catch {
+      setTagError('Your tag change could not be saved. Please try again.');
+    }
   }
 
   const nextLevel = Math.min(6, attempt.level + 1);
@@ -42,6 +69,11 @@ export default function Review() {
     <div className="page">
       <Link to={`/practice/${attempt.clipId}`} className="back-link">‹ Back to clip</Link>
       <h1 className="page__title">Review: {attempt.title}</h1>
+
+      {location.state?.notSaved && (
+        <p className="form__error" role="status">We could not save this report to your account, so it is only saved in this browser for now.</p>
+      )}
+      {tagError && <p className="form__error" role="alert">{tagError}</p>}
 
       <div className="review-top">
         <section className="score-card" aria-label="Your score">
@@ -59,6 +91,7 @@ export default function Review() {
           <div className="stack">
             <Link to="/vocab" className="btn btn--primary btn--block">Start vocab quiz</Link>
             <Link to="/history" className="btn btn--outline btn--block">All past reports</Link>
+            <Link to="/progress" className="btn btn--outline btn--block">My progress</Link>
             <button type="button" className="btn btn--outline btn--block" aria-expanded={showScript} onClick={() => setShowScript(!showScript)}>
               Full script (English + Korean)
             </button>

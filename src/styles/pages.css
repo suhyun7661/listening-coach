@@ -345,3 +345,28 @@
 .form__error { margin: 0; padding: 10px 14px; border-radius: 10px; background: #fde7e5; color: #b42318; font-weight: 600; }
 .form__notice { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--ac-bg); color: var(--ac-text); font-weight: 600; }
 .form__skip { margin-top: 8px; }
+
+/* ---------- Stage 10: real data, charts ---------- */
+.text--CS { color: var(--cs-text); } .text--SP { color: var(--sp-text); } .text--V { color: var(--v-text); }
+.text--AC { color: var(--ac-text); } .text--MI { color: var(--mi-text); }
+.welcome__links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 18px 0 0; }
+.welcome__links .welcome__link { margin-top: 0; }
+.history-move { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.history-move p { margin: 0; font-weight: 600; }
+
+.chart__note { margin-bottom: 8px; }
+.columns { list-style: none; margin: 8px 0 0; padding: 0; display: flex; align-items: flex-end; gap: 8px; overflow-x: auto; }
+.columns__item { flex: 1 0 44px; max-width: 80px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.columns__value { font-size: 13px; font-weight: 800; }
+.columns__track { width: 100%; height: 160px; display: flex; align-items: flex-end; background: var(--bg); border-radius: 10px; overflow: hidden; }
+.columns__track--stack { flex-direction: column-reverse; justify-content: flex-start; align-items: stretch; }
+.columns__bar { display: block; width: 100%; background: var(--violet); border-radius: 10px 10px 0 0; }
+.columns__seg { display: block; width: 100%; }
+.columns__label { font-size: 13px; font-weight: 800; color: var(--violet); }
+.columns__date { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.legend--cats { list-style: none; margin: 0 0 8px; padding: 0; }
+.legend__dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.fill--level { background: var(--violet); }
+.bars__row--level { grid-template-columns: 80px 1fr 56px 70px; }
+.bars__count--wide { width: 56px; }
+.bars__times { font-size: 13px; }

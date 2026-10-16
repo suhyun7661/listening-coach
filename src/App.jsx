@@ -11,6 +11,7 @@ import Admin from './pages/Admin';
 import History from './pages/History';
 import Login from './pages/Login';
 import Account from './pages/Account';
+import Progress from './pages/Progress';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/review" element={<Review />} />
         <Route path="/review/:attemptId" element={<Review />} />
         <Route path="/history" element={<History />} />
+        <Route path="/progress" element={<Progress />} />
         <Route path="/login" element={<Login />} />
         <Route path="/account" element={<Account />} />
         <Route path="/compete" element={<Compete />} />

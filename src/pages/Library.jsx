@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tag, PlayIcon, Icon } from '../components/Common';
-import { clips, sourceLabel, weaknessCounts } from '../data/sampleData';
+import { categoryNames, clips, sourceLabel } from '../data/sampleData';
+import { CATEGORIES } from '../lib/errorTags';
+import { useAttempts } from '../lib/useAttempts';
+
+const TILE_ORDER = ['SP', 'V', 'CS', 'AC', 'MI'];
 
 function Chips({ label, options, value, onChange }) {
   return (
@@ -25,6 +29,8 @@ function Chips({ label, options, value, onChange }) {
 }
 
 export default function Library() {
+  const { attempts, totals, main, loading } = useAttempts();
+  const mainCategory = CATEGORIES.find((c) => c.id === main);
   // Filters only change the screen for now; real filtering comes with real data.
   const [level, setLevel] = useState(3);
   const [accent, setAccent] = useState('all');
@@ -34,19 +40,32 @@ export default function Library() {
     <div className="page">
       <div className="home-top">
         <section className="card welcome" aria-labelledby="welcome-h">
-          <p className="welcome__small">From your Day 1 listening check</p>
+          <p className="welcome__small">
+            {attempts.length ? `Based on your ${attempts.length} saved report${attempts.length > 1 ? 's' : ''}` : 'Your weak spots will show up here'}
+          </p>
           <h1 id="welcome-h" className="welcome__title">
-            Welcome back. Your main weakness is <span className="accent-sp">speed (SP)</span>.
+            {loading ? (
+              'Loading your results…'
+            ) : mainCategory ? (
+              <>Welcome back. Your main weakness is <span className={`text--${main}`}>{mainCategory.label.toLowerCase()} ({main})</span>.</>
+            ) : attempts.length ? (
+              'Welcome back. You have no missed words so far. Great listening!'
+            ) : (
+              'Welcome! Practice one clip and we will find your main weakness.'
+            )}
           </h1>
           <ul className="weakness">
-            {weaknessCounts.map((w) => (
-              <li key={w.id} className={`weakness__item tag--${w.id}`}>
-                <span className="weakness__num">{w.count}</span>
-                <span className="weakness__name">{w.id} · {w.label}</span>
+            {TILE_ORDER.map((id) => (
+              <li key={id} className={`weakness__item tag--${id}`}>
+                <span className="weakness__num">{totals[id]}</span>
+                <span className="weakness__name">{id} · {categoryNames[id]}</span>
               </li>
             ))}
           </ul>
-          <Link to="/history" className="welcome__link">See your past reports</Link>
+          <p className="welcome__links">
+            <Link to="/history" className="welcome__link">See your past reports</Link>
+            <Link to="/progress" className="welcome__link">See your progress</Link>
+          </p>
         </section>
 
         <section className="mode-panel" aria-labelledby="mode-h">

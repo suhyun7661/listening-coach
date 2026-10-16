@@ -5,7 +5,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import HintedBlank from '../components/HintedBlank';
 import { clips, getClip } from '../data/clips';
 import { describeHints, getLevelRule } from '../lib/blanks';
-import { saveAttempt } from '../lib/attemptStore';
+import { saveAttempt } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
 import { buildResults } from '../lib/errorTags';
 import { AUTO_ADVANCE_DELAY, useDictation } from '../lib/useDictation';
@@ -24,7 +24,8 @@ export default function Practice() {
 function PracticeClip({ clip }) {
   const [search] = useSearchParams();
   const navigate = useNavigate();
-  const { accent: userAccent } = useAuth();
+  const { accent: userAccent, user } = useAuth();
+  const [saving, setSaving] = useState(false);
   const fromUrl = Number(search.get('level'));
   const [level, setLevel] = useState(fromUrl >= 1 && fromUrl <= 6 ? fromUrl : clip.difficulty);
   const rule = getLevelRule(level);
@@ -42,10 +43,12 @@ function PracticeClip({ clip }) {
   const pct = (t) => `${Math.min(100, (t / total) * 100)}%`;
   // Grade everything, remember it for the Review page, and go there.
   // userAccent comes from the learner's account (US if they are not signed in).
-  function submit() {
+  async function submit() {
+    if (saving) return;
+    setSaving(true);
     const results = buildResults(clip.sentences, tokensBySentence, dictation.answers, { clipAccent: clip.accent, userAccent });
-    const id = saveAttempt({ clipId: clip.id, title: clip.title, level, speed: player.speed, results });
-    navigate(`/review/${id}`);
+    const saved = await saveAttempt(user, { clipId: clip.id, title: clip.title, level, speed: player.speed, results });
+    navigate(`/review/${saved.id}`, { state: { notSaved: Boolean(saved.failed) } });
   }
 
   const isLast = current === clip.sentences.length - 1;
@@ -192,7 +195,7 @@ function PracticeClip({ clip }) {
             </section>
           )}
 
-          <button type="button" className="btn btn--submit" onClick={submit}>Submit clip for grading</button>
+          <button type="button" className="btn btn--submit" onClick={submit} disabled={saving}>{saving ? 'Saving…' : 'Submit clip for grading'}</button>
         </aside>
       </div>
     </div>

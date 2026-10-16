@@ -1,43 +1,61 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ErrorSummary from '../components/ErrorSummary';
 import { Tag } from '../components/Common';
-import { CATEGORY_IDS, computeScore, mainWeakness, summarizeTags } from '../lib/errorTags';
-import { loadAttempts } from '../lib/attemptStore';
+import { useAuth } from '../lib/AuthContext';
+import { countBrowserReports, importBrowserReports } from '../lib/attempts';
+import { useAttempts } from '../lib/useAttempts';
 
 // Every report you have finished, newest first, plus the totals added up over all of them.
 export default function History() {
-  const rows = useMemo(
-    () =>
-      loadAttempts().map((a) => {
-        const counts = summarizeTags(a.results, a.userTags);
-        return { ...a, score: computeScore(a.results), counts, main: mainWeakness(counts) };
-      }),
-    []
-  );
+  const { user } = useAuth();
+  const { attempts, totals, loading, error, reload } = useAttempts();
+  const [waiting, setWaiting] = useState(false);
+  const [notice, setNotice] = useState('');
+  const browserCount = user ? countBrowserReports() : 0;
 
-  const totals = useMemo(() => {
-    const sum = Object.fromEntries(CATEGORY_IDS.map((id) => [id, 0]));
-    rows.forEach((r) => CATEGORY_IDS.forEach((id) => { sum[id] += r.counts[id]; }));
-    return sum;
-  }, [rows]);
+  async function moveToAccount() {
+    setWaiting(true);
+    const moved = await importBrowserReports(user);
+    setWaiting(false);
+    setNotice(moved ? `Moved ${moved} report${moved > 1 ? 's' : ''} to your account.` : 'Could not move the reports. Please try again.');
+    reload();
+  }
 
   return (
     <div className="page">
       <h1 className="page__title">Past reports</h1>
-      <p className="page__lead">Every clip you have graded is saved here, so you can open it again any time.</p>
+      <p className="page__lead">
+        {user ? 'Your reports are saved in your account, so you can open them on any device.' : (
+          <>Reports are saved in this browser only. <Link to="/login">Sign in</Link> to keep them in your account.</>
+        )}
+      </p>
 
-      {rows.length === 0 ? (
+      {browserCount > 0 && (
+        <div className="card history-move">
+          <p>You have {browserCount} report{browserCount > 1 ? 's' : ''} saved only in this browser.</p>
+          <button type="button" className="btn btn--primary" onClick={moveToAccount} disabled={waiting}>
+            {waiting ? 'Moving…' : 'Move them to my account'}
+          </button>
+        </div>
+      )}
+      {notice && <p className="form__notice" role="status">{notice}</p>}
+      {error && <p className="form__error" role="alert">{error}</p>}
+
+      {loading ? (
+        <p className="muted">Loading your reports…</p>
+      ) : attempts.length === 0 ? (
         <div className="card">
           <p>No reports yet. Finish a practice clip and press “Submit clip for grading”.</p>
           <Link to="/" className="btn btn--primary">Go to the library</Link>
         </div>
       ) : (
         <>
-          <ErrorSummary counts={totals} title={`All ${rows.length} reports added up`} scope="across all reports" />
+          <ErrorSummary counts={totals} title={`All ${attempts.length} reports added up`} scope="across all reports" />
+          <p><Link to="/progress" className="btn btn--outline">See my progress charts</Link></p>
           <h2 className="section-title history-title">Your reports</h2>
           <ul className="stack">
-            {rows.map((r) => (
+            {attempts.map((r) => (
               <li key={r.id} className="card history-row">
                 <div>
                   <p className="history-row__title">{r.title}</p>
