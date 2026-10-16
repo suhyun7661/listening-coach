@@ -54,18 +54,31 @@
 }
 .header__link:hover { background: var(--violet-light); }
 .header__link.is-active { background: var(--coral); color: var(--ink); }
+.header__logo { display: inline-flex; align-items: center; gap: 10px; }
 .header__account {
-  min-height: 40px;
-  padding: 0 18px;
-  border: 2px solid var(--white);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px 0 6px;
+  border: 0;
   border-radius: var(--radius-pill);
-  background: transparent;
+  background: var(--violet-light);
   color: var(--white);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
 }
-.header__account:hover { background: var(--violet-light); }
+.header__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--coral);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
 .header :focus-visible { outline-color: var(--yellow); }
 
 @media (min-width: 860px) {
