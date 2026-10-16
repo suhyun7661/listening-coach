@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check:clips": "node scripts/check-clips.mjs",
-    "make:seed": "node scripts/make-seed.mjs"
+    "make:seed": "node scripts/make-seed.mjs",
+    "make:audio": "node scripts/make-audio.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

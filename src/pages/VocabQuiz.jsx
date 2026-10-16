@@ -5,7 +5,7 @@ import { clips } from '../data/clips';
 import { gradeAnswer } from '../lib/grading';
 import { saveReview, sentenceFor } from '../lib/notebook';
 import { isDue, scheduleAfter, whenText } from '../lib/spaced';
-import { canSpeak, speak, voiceStatus } from '../lib/speech';
+import { playMessage, playWord } from '../lib/audio';
 import { seededRandom } from '../lib/textUtils';
 import { useNotebook } from '../lib/useNotebook';
 
@@ -183,20 +183,12 @@ export function Question({ item, type, onAnswered, onSkip, onNext, isLast }) {
   const inputRef = useRef(null);
   const nextRef = useRef(null);
 
-  // Which accents can really be played on this computer?
-  const [voices, setVoices] = useState({ US: true, UK: true });
-  useEffect(() => {
-    voiceStatus().then(setVoices);
-  }, []);
-  const voiceNote = !canSpeak
-    ? 'This browser cannot play spoken words.'
-    : !voices.US && !voices.UK
-      ? 'This computer has no English voice installed, so words cannot be played yet.'
-      : !voices.UK
-        ? 'This computer has no UK English voice, so Play UK is turned off (it would sound the same as US).'
-        : !voices.US
-          ? 'This computer has no US English voice, so Play US is turned off.'
-          : '';
+  // What happened the last time a Play button was pressed (empty when it all went well).
+  const [playNote, setPlayNote] = useState('');
+  async function play(accent) {
+    const result = await playWord(item.word, accent);
+    setPlayNote(playMessage(result, accent));
+  }
 
   useEffect(() => {
     if (feedback) nextRef.current?.focus();
@@ -232,11 +224,11 @@ export function Question({ item, type, onAnswered, onSkip, onNext, isLast }) {
           {actual === 'listen' && item.ko && <p lang="ko" className="quiz-card__hint">Meaning: {item.ko}</p>}
         </div>
         <div className="quiz-card__play">
-          <button type="button" className="btn btn--secondary" onClick={() => speak(item.word, 'US')} disabled={!canSpeak || !voices.US}><Icon name="speaker" /> Play US</button>
-          <button type="button" className="btn btn--outline" onClick={() => speak(item.word, 'UK')} disabled={!canSpeak || !voices.UK}><Icon name="speaker" /> Play UK</button>
+          <button type="button" className="btn btn--secondary" onClick={() => play('US')}><Icon name="speaker" /> Play US</button>
+          <button type="button" className="btn btn--outline" onClick={() => play('UK')}><Icon name="speaker" /> Play UK</button>
         </div>
       </div>
-      {voiceNote && <p className="muted voice-note" role="status">{voiceNote} Real US and UK recordings are coming in a later stage.</p>}
+      {playNote && <p className="muted voice-note" role="status">{playNote}</p>}
       {changed && <p className="muted">No other way to ask this word, so it is a typing question.</p>}
       {actual === 'gap' && item.ko && <p lang="ko" className="quiz-card__hint">Hint: {item.ko}</p>}
       {actual === 'meaning' && sentenceFor(item) && (

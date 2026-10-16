@@ -8,6 +8,8 @@ import { isMiss } from '../lib/grading';
 import { getAttempt, setUserTag } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
 import { addItems, itemsFromSentence } from '../lib/notebook';
+import { playMessage, playSentence } from '../lib/audio';
+import { getClip } from '../data/clips';
 
 export default function Review() {
   const { attemptId } = useParams();
@@ -18,6 +20,8 @@ export default function Review() {
   const [showScript, setShowScript] = useState(false);
   const [tagError, setTagError] = useState('');
   const [saveNotes, setSaveNotes] = useState({}); // message under each Save button
+  const [compare, setCompare] = useState(null); // sentence id whose Compare panel is open
+  const [compareNote, setCompareNote] = useState('');
 
   useEffect(() => {
     if (auth.loading) return undefined;
@@ -77,6 +81,14 @@ export default function Review() {
     } catch {
       return setSaveNotes((n) => ({ ...n, [key]: 'Could not save. Please try again.' }));
     }
+  }
+
+  // Plays the US or UK recording of one sentence.
+  async function playCompare(row, accent) {
+    const sentence = getClip(attempt.clipId)?.sentences.find((x) => x.id === row.sentenceId);
+    if (!sentence) return;
+    const result = await playSentence(attempt.clipId, sentence, accent);
+    setCompareNote(playMessage(result, accent));
   }
 
   const nextLevel = Math.min(6, attempt.level + 1);
@@ -185,9 +197,19 @@ export default function Review() {
                     {misses.length === 0 && <span className="tag tag--AC">Almost</span>}
                   </div>
                 )}
+                {compare === row.sentenceId && (
+                  <div className="compare" role="group" aria-label="Compare accents">
+                    <p className="muted">Listen to the same sentence in both accents.</p>
+                    <div className="review-row__btns">
+                      <button type="button" className="btn btn--secondary btn--small" onClick={() => playCompare(row, 'US')}>Play US</button>
+                      <button type="button" className="btn btn--secondary btn--small" onClick={() => playCompare(row, 'UK')}>Play UK</button>
+                    </div>
+                    {compareNote && <p className="muted voice-note" role="status">{compareNote}</p>}
+                  </div>
+                )}
                 <div className="review-row__btns">
                   <button type="button" className="btn btn--secondary btn--small" disabled title="Coming in a later stage">Replay</button>
-                  <button type="button" className="btn btn--outline btn--small" disabled title="Accent audio comes in Stage 12">Compare US / UK</button>
+                  <button type="button" className="btn btn--outline btn--small" aria-expanded={compare === row.sentenceId} onClick={() => { setCompare(compare === row.sentenceId ? null : row.sentenceId); setCompareNote(''); }}>Compare US / UK</button>
                 </div>
                 <button type="button" className="btn btn--outline btn--small btn--block" onClick={() => saveWords(row.sentenceId, [row])} disabled={perfect}>+ Save to notebook</button>
                 {saveNotes[row.sentenceId] && <p className="muted save-note" role="status">{saveNotes[row.sentenceId]}</p>}
