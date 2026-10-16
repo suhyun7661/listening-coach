@@ -370,3 +370,19 @@
 .bars__row--level { grid-template-columns: 80px 1fr 56px 70px; }
 .bars__count--wide { width: 56px; }
 .bars__times { font-size: 13px; }
+
+/* ---------- Stage 11: notebook and quiz ---------- */
+.save-note { margin: 0; font-size: 13px; }
+.notebook-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 16px; }
+.quiz-card__sentence { font-size: 26px; font-weight: 700; margin: 8px 0 0; line-height: 1.4; }
+.quiz-card__hint { margin: 8px 0 0; color: var(--violet); font-weight: 700; }
+.quiz-input input { width: 100%; font-size: 22px; font-weight: 600; }
+.quiz-input { margin-top: 20px; }
+.option.is-correct { background: var(--ac-bg); border: 2px solid var(--ac-text); }
+.option.is-wrong { background: #fde7e5; border: 2px solid #b42318; }
+.quiz-feedback { margin-top: 20px; padding: 14px 18px; border-radius: var(--radius-button); display: flex; flex-direction: column; gap: 4px; }
+.quiz-feedback--ok { background: var(--ac-bg); color: var(--ac-text); }
+.quiz-feedback--no { background: #fde7e5; color: #8a1c12; }
+.quiz-feedback .muted { color: inherit; opacity: 0.85; }
+.quiz-summary__score { font-size: 32px; font-weight: 800; color: var(--violet); margin: 0 0 12px; }
+.quiz-card .due { margin-bottom: 8px; }

@@ -7,6 +7,7 @@ import { allBlanks, computeScore, finalTag, summarizeTags } from '../lib/errorTa
 import { isMiss } from '../lib/grading';
 import { getAttempt, setUserTag } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
+import { addItems, itemsFromSentence } from '../lib/notebook';
 
 export default function Review() {
   const { attemptId } = useParams();
@@ -16,6 +17,7 @@ export default function Review() {
   const [userTags, setUserTags] = useState({});
   const [showScript, setShowScript] = useState(false);
   const [tagError, setTagError] = useState('');
+  const [saveNotes, setSaveNotes] = useState({}); // message under each Save button
 
   useEffect(() => {
     if (auth.loading) return undefined;
@@ -63,6 +65,20 @@ export default function Review() {
     }
   }
 
+  // Save the missed words of one sentence (or of every sentence) to the notebook.
+  async function saveWords(key, rows) {
+    if (!auth.user) return setSaveNotes((n) => ({ ...n, [key]: 'Sign in to save words to your notebook.' }));
+    const items = rows.flatMap((r) => itemsFromSentence(r, attempt.clipId, userTags));
+    if (!items.length) return setSaveNotes((n) => ({ ...n, [key]: 'No words to save here.' }));
+    try {
+      const added = await addItems(auth.user.id, items);
+      const text = added ? `Saved ${added} new word${added > 1 ? 's' : ''} to your notebook.` : 'Already in your notebook.';
+      return setSaveNotes((n) => ({ ...n, [key]: text }));
+    } catch {
+      return setSaveNotes((n) => ({ ...n, [key]: 'Could not save. Please try again.' }));
+    }
+  }
+
   const nextLevel = Math.min(6, attempt.level + 1);
 
   return (
@@ -90,6 +106,8 @@ export default function Review() {
           <h2 id="next-h" className="side-title">Next steps</h2>
           <div className="stack">
             <Link to="/vocab" className="btn btn--primary btn--block">Start vocab quiz</Link>
+            <button type="button" className="btn btn--outline btn--block" onClick={() => saveWords('all', results)}>+ Save all missed words to notebook</button>
+            {saveNotes.all && <p className="muted save-note" role="status">{saveNotes.all}</p>}
             <Link to="/history" className="btn btn--outline btn--block">All past reports</Link>
             <Link to="/progress" className="btn btn--outline btn--block">My progress</Link>
             <button type="button" className="btn btn--outline btn--block" aria-expanded={showScript} onClick={() => setShowScript(!showScript)}>
@@ -171,7 +189,8 @@ export default function Review() {
                   <button type="button" className="btn btn--secondary btn--small" disabled title="Coming in a later stage">Replay</button>
                   <button type="button" className="btn btn--outline btn--small" disabled title="Accent audio comes in Stage 12">Compare US / UK</button>
                 </div>
-                <button type="button" className="btn btn--outline btn--small btn--block" disabled title="The notebook comes in a later stage">+ Save to notebook</button>
+                <button type="button" className="btn btn--outline btn--small btn--block" onClick={() => saveWords(row.sentenceId, [row])} disabled={perfect}>+ Save to notebook</button>
+                {saveNotes[row.sentenceId] && <p className="muted save-note" role="status">{saveNotes[row.sentenceId]}</p>}
               </div>
             </article>
           );
