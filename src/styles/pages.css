@@ -307,3 +307,17 @@
 .blank-wrap { position: relative; }
 .blank-wrap__hint { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; text-align: center; font-size: 15px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); white-space: nowrap; pointer-events: none; }
 .sentence { row-gap: 34px; padding-bottom: 20px; }
+
+/* ---------- Review with real results (Stage 6) ---------- */
+.bars__row { grid-template-columns: 210px 1fr 24px; }
+.bars__main { margin: 0 0 8px; }
+.mark--almost { background: #fff3c4; color: var(--ink); text-decoration: underline wavy #c99a00; }
+.review-row__miss { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--border); margin-top: 14px; padding-top: 12px; }
+.tagpick { color: var(--ink); }
+.tagpick.is-selected { border-width: 2px; border-style: solid; }
+.tagpick__label { font-weight: 600; font-size: 13px; }
+.review-row__tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.script { margin-bottom: 32px; }
+.script__list { margin: 0; padding-left: 28px; display: flex; flex-direction: column; gap: 10px; }
+.script__ko { display: block; color: var(--violet); }
+@media (max-width: 520px) { .bars__row { grid-template-columns: 130px 1fr 20px; } }

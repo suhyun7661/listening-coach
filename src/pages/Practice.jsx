@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { PlayIcon, Icon } from '../components/Common';
 import VideoPlayer from '../components/VideoPlayer';
 import HintedBlank from '../components/HintedBlank';
 import { clips, getClip } from '../data/clips';
 import { describeHints, getLevelRule } from '../lib/blanks';
+import { saveAttempt } from '../lib/attemptStore';
+import { buildResults } from '../lib/errorTags';
 import { AUTO_ADVANCE_DELAY, useDictation } from '../lib/useDictation';
 import { formatTime, usePracticePlayer } from '../lib/usePracticePlayer';
 
@@ -19,7 +21,10 @@ export default function Practice() {
 }
 
 function PracticeClip({ clip }) {
-  const [level, setLevel] = useState(clip.difficulty);
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const fromUrl = Number(search.get('level'));
+  const [level, setLevel] = useState(fromUrl >= 1 && fromUrl <= 6 ? fromUrl : clip.difficulty);
   const rule = getLevelRule(level);
 
   const dictation = useDictation(clip.sentences, level);
@@ -33,6 +38,14 @@ function PracticeClip({ clip }) {
 
   const total = player.duration || 1;
   const pct = (t) => `${Math.min(100, (t / total) * 100)}%`;
+  // Grade everything, remember it for the Review page, and go there.
+  // The learner's own accent is assumed to be US until accounts exist (Stage 9).
+  function submit() {
+    const results = buildResults(clip.sentences, tokensBySentence, dictation.answers, { clipAccent: clip.accent, userAccent: 'US' });
+    saveAttempt({ clipId: clip.id, title: clip.title, level, speed: player.speed, results });
+    navigate('/review');
+  }
+
   const isLast = current === clip.sentences.length - 1;
 
   let blankCounter = -1;
@@ -177,7 +190,7 @@ function PracticeClip({ clip }) {
             </section>
           )}
 
-          <Link to="/review" className="btn btn--submit">Submit clip for grading</Link>
+          <button type="button" className="btn btn--submit" onClick={submit}>Submit clip for grading</button>
         </aside>
       </div>
     </div>
