@@ -241,9 +241,8 @@ drop policy if exists "challenges: read as member" on public.challenges;
 create policy "challenges: read as member" on public.challenges
   for select to authenticated using (created_by = auth.uid() or public.is_challenge_member(id));
 
+-- Rooms are created only through create_challenge() (Stage 14), which checks everything.
 drop policy if exists "challenges: create own" on public.challenges;
-create policy "challenges: create own" on public.challenges
-  for insert to authenticated with check (created_by = auth.uid());
 
 drop policy if exists "challenges: delete own" on public.challenges;
 create policy "challenges: delete own" on public.challenges
@@ -307,5 +306,212 @@ begin
      and not exists (select 1 from pg_publication_tables
                      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'challenge_results') then
     alter publication supabase_realtime add table public.challenge_results;
+  end if;
+end $$;
+
+-- ============================================================ Stage 14: Competing mode rules
+-- Everything that must be fair is decided HERE on the server, not in the browser:
+-- how many plays, the 60 seconds, one attempt, and the grading.
+
+alter table public.challenges add column if not exists blank_indexes int[] not null default '{}';
+
+-- One row per player per room: when they pressed Start and how many plays they used.
+create table if not exists public.challenge_runs (
+  challenge_id  uuid not null references public.challenges(id) on delete cascade,
+  user_id       uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  started_at    timestamptz not null default now(),
+  plays         int not null default 0,
+  finished      boolean not null default false,
+  primary key (challenge_id, user_id)
+);
+alter table public.challenge_runs enable row level security;
+
+drop policy if exists "runs: read own" on public.challenge_runs;
+create policy "runs: read own" on public.challenge_runs
+  for select to authenticated using (user_id = auth.uid());
+revoke insert, update, delete on public.challenge_runs from anon, authenticated;
+
+-- ---- grading helpers (same rules as the website's grading code)
+create or replace function public.lc_normalize(t text)
+returns text language sql immutable as $$
+  select btrim(regexp_replace(regexp_replace(lower(replace(replace(coalesce(t, ''), '’', ''''), '‘', '''')), '[^a-z0-9'' ]+', ' ', 'g'), '\s+', ' ', 'g'))
+$$;
+
+create or replace function public.lc_levenshtein(a text, b text)
+returns int language plpgsql immutable as $$
+declare la int := length(a); lb int := length(b); prev int[]; cur int[]; i int; j int; cost int;
+begin
+  if la = 0 then return lb; end if;
+  if lb = 0 then return la; end if;
+  prev := array(select generate_series(0, lb));
+  for i in 1..la loop
+    cur := array[i];
+    for j in 1..lb loop
+      cost := case when substr(a, i, 1) = substr(b, j, 1) then 0 else 1 end;
+      cur[j + 1] := least(prev[j + 1] + 1, cur[j] + 1, prev[j] + cost);
+    end loop;
+    prev := cur;
+  end loop;
+  return prev[lb + 1];
+end $$;
+
+-- 1 = correct, 0.5 = one-letter typo on a word of 5+ letters, 0 = wrong or empty
+create or replace function public.lc_grade(answer text, correct text)
+returns numeric language plpgsql immutable as $$
+declare a text := public.lc_normalize(answer); c text := public.lc_normalize(correct); sa text; sc text; same boolean;
+begin
+  if a = '' then return 0; end if;
+  sa := replace(a, '''', ''); sc := replace(c, '''', '');
+  if a = c or sa = sc then return 1; end if;
+  same := case c
+       when 'i''m' then a = 'i am'
+       when 'you''re' then a = 'you are'
+       when 'we''re' then a = 'we are'
+       when 'they''re' then a = 'they are'
+       when 'it''s' then a = 'it is'
+       when 'that''s' then a = 'that is'
+       when 'don''t' then a = 'do not'
+       when 'didn''t' then a = 'did not'
+       when 'can''t' then a in ('cannot', 'can not')
+       when 'won''t' then a = 'will not'
+       when 'isn''t' then a = 'is not'
+       when 'gonna' then a = 'going to'
+       when 'wanna' then a = 'want to'
+       when 'gotta' then a = 'got to'
+       when 'okay' then a = 'ok'
+       when 'ok' then a = 'okay'
+       else false end;
+  if same then return 1; end if;
+  if length(c) >= 5 and public.lc_levenshtein(sa, sc) = 1 then return 0.5; end if;
+  return 0;
+end $$;
+
+-- The word at position idx of a sentence (position counted like the website does), or null.
+create or replace function public.lc_token_word(sentence text, idx int)
+returns text language sql immutable as $$
+  select substring((regexp_split_to_array(btrim(sentence), '\s+'))[idx + 1] from '^[^A-Za-z0-9''’]*([A-Za-z0-9''’-]+)[^A-Za-z0-9''’]*$')
+$$;
+
+-- ---- create a room (the website picks the blanks; the server checks them)
+create or replace function public.create_challenge(p_clip text, p_sentence text, p_level int, p_label text, p_blank_indexes int[])
+returns public.challenges language plpgsql security definer set search_path = public as $$
+declare s public.sentences; c public.challenges; code text; tries int := 0; idx int;
+begin
+  if auth.uid() is null then raise exception 'Please sign in first'; end if;
+  select se.* into s from public.sentences se join public.clips cl on cl.id = se.clip_id
+   where se.clip_id = p_clip and se.sentence_id = p_sentence and cl.published;
+  if not found then raise exception 'That sentence does not exist'; end if;
+  if p_level not between 1 and 6 then raise exception 'Level must be 1 to 6'; end if;
+  if char_length(coalesce(p_label, '')) > 60 then raise exception 'The label is too long (60 characters)'; end if;
+  if p_blank_indexes is null or cardinality(p_blank_indexes) not between 1 and 40 then raise exception 'Invalid blanks'; end if;
+  if (select count(distinct x) from unnest(p_blank_indexes) x) <> cardinality(p_blank_indexes) then raise exception 'Invalid blanks'; end if;
+  foreach idx in array p_blank_indexes loop
+    if idx < 0 or public.lc_token_word(s.text, idx) is null then raise exception 'Invalid blanks'; end if;
+  end loop;
+  loop
+    code := lpad(floor(random() * 1000000)::int::text, 6, '0');
+    begin
+      insert into public.challenges (room_code, clip_id, sentence_id, level, label, blank_indexes)
+      values (code, p_clip, p_sentence, p_level, coalesce(p_label, ''), p_blank_indexes)
+      returning * into c;
+      exit;
+    exception when unique_violation then
+      tries := tries + 1;
+      if tries > 10 then raise exception 'Could not make a room code, please try again'; end if;
+    end;
+  end loop;
+  return c;
+end $$;
+
+-- ---- where am I in this room? (never changes anything)
+create or replace function public.challenge_status(p_challenge uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare c public.challenges; r public.challenge_runs; res public.challenge_results;
+begin
+  if not public.is_challenge_member(p_challenge) then raise exception 'You are not in this room'; end if;
+  select * into c from public.challenges where id = p_challenge;
+  select * into r from public.challenge_runs where challenge_id = p_challenge and user_id = auth.uid();
+  select * into res from public.challenge_results where challenge_id = p_challenge and user_id = auth.uid();
+  return json_build_object(
+    'now', now(), 'started', r.challenge_id is not null, 'started_at', r.started_at,
+    'plays', coalesce(r.plays, 0), 'max_plays', c.max_plays, 'time_limit_seconds', c.time_limit_seconds,
+    'finished', coalesce(r.finished, false) or res.id is not null);
+end $$;
+
+-- ---- Start: the 60 seconds begin now, on the server's clock. Pressing it again changes nothing.
+create or replace function public.challenge_start(p_challenge uuid)
+returns json language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_challenge_member(p_challenge) then raise exception 'You are not in this room'; end if;
+  insert into public.challenge_runs (challenge_id, user_id) values (p_challenge, auth.uid()) on conflict do nothing;
+  return public.challenge_status(p_challenge);
+end $$;
+
+-- ---- Play: the server counts it. Refused after the last play or when time is up.
+create or replace function public.challenge_play(p_challenge uuid)
+returns json language plpgsql security definer set search_path = public as $$
+declare c public.challenges; r public.challenge_runs;
+begin
+  if not public.is_challenge_member(p_challenge) then raise exception 'You are not in this room'; end if;
+  select * into c from public.challenges where id = p_challenge;
+  select * into r from public.challenge_runs where challenge_id = p_challenge and user_id = auth.uid() for update;
+  if not found then raise exception 'Press Start first'; end if;
+  if r.finished then raise exception 'You already finished'; end if;
+  if now() > r.started_at + make_interval(secs => c.time_limit_seconds + 1) then raise exception 'Time is up'; end if;
+  if r.plays >= c.max_plays then raise exception 'No plays left'; end if;
+  update public.challenge_runs set plays = plays + 1 where challenge_id = p_challenge and user_id = auth.uid();
+  return json_build_object('plays', r.plays + 1, 'max_plays', c.max_plays);
+end $$;
+
+-- ---- Submit: graded and timed on the server. Only one attempt is ever stored.
+create or replace function public.challenge_submit(p_challenge uuid, p_answers text[])
+returns json language plpgsql security definer set search_path = public as $$
+declare c public.challenges; r public.challenge_runs; s public.sentences; res public.challenge_results;
+        elapsed interval; late boolean; n int; i int; pts numeric := 0; ans text;
+begin
+  if not public.is_challenge_member(p_challenge) then raise exception 'You are not in this room'; end if;
+  select * into c from public.challenges where id = p_challenge;
+  select * into r from public.challenge_runs where challenge_id = p_challenge and user_id = auth.uid() for update;
+  if not found then raise exception 'Press Start first'; end if;
+  select * into res from public.challenge_results where challenge_id = p_challenge and user_id = auth.uid();
+  if found then return to_json(res); end if;
+
+  elapsed := now() - r.started_at;
+  late := elapsed > make_interval(secs => c.time_limit_seconds + 5);   -- 5 seconds of network slack
+  select * into s from public.sentences where clip_id = c.clip_id and sentence_id = c.sentence_id;
+  n := cardinality(c.blank_indexes);
+  for i in 1..n loop
+    ans := case when late then '' else coalesce(p_answers[i], '') end;
+    pts := pts + public.lc_grade(ans, public.lc_token_word(s.text, c.blank_indexes[i]));
+  end loop;
+
+  insert into public.challenge_results (challenge_id, user_id, answers, correct_blanks, total_blanks, accuracy, plays, elapsed_ms)
+  values (p_challenge, auth.uid(), to_jsonb(case when late then array[]::text[] else p_answers end), pts, n,
+          round(pts / n * 100, 2), r.plays,
+          least(floor(extract(epoch from elapsed) * 1000), c.time_limit_seconds * 1000)::int)
+  returning * into res;
+  update public.challenge_runs set finished = true where challenge_id = p_challenge and user_id = auth.uid();
+  return to_json(res);
+end $$;
+
+-- Only signed-in people may call the room functions.
+revoke all on function public.create_challenge(text, text, int, text, int[]) from public, anon;
+revoke all on function public.challenge_status(uuid) from public, anon;
+revoke all on function public.challenge_start(uuid) from public, anon;
+revoke all on function public.challenge_play(uuid) from public, anon;
+revoke all on function public.challenge_submit(uuid, text[]) from public, anon;
+grant execute on function public.create_challenge(text, text, int, text, int[]) to authenticated;
+grant execute on function public.challenge_status(uuid) to authenticated;
+grant execute on function public.challenge_start(uuid) to authenticated;
+grant execute on function public.challenge_play(uuid) to authenticated;
+grant execute on function public.challenge_submit(uuid, text[]) to authenticated;
+
+-- The live leaderboard also listens for people joining the room.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (select 1 from pg_publication_tables
+                     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'challenge_members') then
+    alter publication supabase_realtime add table public.challenge_members;
   end if;
 end $$;

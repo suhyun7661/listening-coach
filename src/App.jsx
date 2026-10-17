@@ -4,7 +4,8 @@ import PlaceholderPage from './components/PlaceholderPage';
 import Library from './pages/Library';
 import Practice from './pages/Practice';
 import Review from './pages/Review';
-import Compete from './pages/Compete';
+import CompeteHome from './pages/CompeteHome';
+import CompeteRoom from './pages/CompeteRoom';
 import VocabQuiz from './pages/VocabQuiz';
 import Notebook from './pages/Notebook';
 import Admin from './pages/Admin';
@@ -26,7 +27,8 @@ export default function App() {
         <Route path="/progress" element={<Progress />} />
         <Route path="/login" element={<Login />} />
         <Route path="/account" element={<Account />} />
-        <Route path="/compete" element={<Compete />} />
+        <Route path="/compete" element={<CompeteHome />} />
+        <Route path="/compete/:code" element={<CompeteRoom />} />
         <Route path="/vocab" element={<VocabQuiz />} />
         <Route path="/notebook" element={<Notebook />} />
         <Route path="/admin" element={<Admin />} />
