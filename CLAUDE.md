@@ -18,6 +18,13 @@
 - Do NOT deploy or publish the site (Vercel or anywhere else) until I explicitly say so. Develop and test locally (`npm run dev`).
 - Stage 7 (Deploy to Vercel) is on hold. `vercel.json` is already prepared and stays unused. Continue with the other stages; ask me before deploying.
 
+## Current status (updated 2026-10-17)
+- Done: stages 1-6, 8-12, 13+15 (built; real-video test pending), 14. Stage 7 (deploy) is on hold; stage 16 (real-user testing) comes last.
+- Waiting on: the first real Higgsfield video. Until then the sample clips use a pretend-clock player.
+- Before using the Admin page the first time, I (the user) must run `supabase/storage.sql` and make my account admin (the SQL is shown on the /admin page when not admin). Then do a first test clip.
+- Adding a clip: Admin page (details, transcript, timing helper, Korean, key expressions, save), then `npm run make:audio` and drag the new files from `generated-audio` into the Supabase Storage `audio` folder.
+- If `supabase/schema.sql` changes, I paste the whole file into the Supabase SQL Editor again (it is safe to run twice).
+
 ## Product
 A website that trains Korean learners to understand fast, natural English through fill-in-the-blank dictation on video clips.
 Main weaknesses it targets: speed (SP), unfamiliar vocabulary (V), connected speech (CS).
