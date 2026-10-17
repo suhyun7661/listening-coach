@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
     let alive = true;
     supabase
       .from('profiles')
-      .select('display_name, accent')
+      .select('display_name, accent, is_admin')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data }) => alive && setProfile(data));
@@ -80,7 +80,7 @@ export function AuthProvider({ children }) {
         .from('profiles')
         .update({ display_name: displayName, accent })
         .eq('id', userId)
-        .select('display_name, accent')
+        .select('display_name, accent, is_admin')
         .single();
       if (error) return { error: friendly(error) };
       setProfile(data);
@@ -97,6 +97,7 @@ export function AuthProvider({ children }) {
       profile,
       // The learner's own accent decides which answers count as "accent" mistakes.
       accent: profile?.accent ?? 'US',
+      isAdmin: Boolean(profile?.is_admin),
       signUp,
       signIn,
       signOut,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import HintedBlank from '../components/HintedBlank';
 import { Icon, PlayIcon } from '../components/Common';
-import { getClip } from '../data/clips';
+import { getClip } from '../lib/clipStore';
 import { playMessage, playSentence } from '../lib/audio';
 import { useAuth } from '../lib/AuthContext';
 import { formatCode, formatTime, getStatus, openRoom, playRun, rankResults, roomTokens, startRun, submitRun } from '../lib/compete';

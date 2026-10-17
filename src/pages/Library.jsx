@@ -1,11 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tag, PlayIcon, Icon } from '../components/Common';
-import { categoryNames, clips, sourceLabel } from '../data/sampleData';
+import { categoryNames, sourceLabel } from '../data/sampleData';
+import { getClips } from '../lib/clipStore';
+import { formatTime } from '../lib/usePracticePlayer';
 import { CATEGORIES } from '../lib/errorTags';
 import { useAttempts } from '../lib/useAttempts';
 
 const TILE_ORDER = ['SP', 'V', 'CS', 'AC', 'MI'];
+
+// Every clip gets its own bright colour (the sample clips keep theirs).
+const PALETTE = ['#5b3df5', '#2f7beb', '#12a57c', '#8b44ee', '#0e9aa7', '#3d5afe', '#d9488a', '#e07a1f'];
+const SAMPLE_COLORS = { 'holiday-pub-01': '#5b3df5', 'intern-01': '#2f7beb', 'cafe-01': '#12a57c', 'interview-01': '#8b44ee', 'directions-01': '#0e9aa7' };
+const colorFor = (id) => SAMPLE_COLORS[id] ?? PALETTE[[...id].reduce((n, ch) => n + ch.charCodeAt(0), 0) % PALETTE.length];
 
 function Chips({ label, options, value, onChange }) {
   return (
@@ -29,6 +36,10 @@ function Chips({ label, options, value, onChange }) {
 }
 
 export default function Library() {
+  const clips = getClips().map((c) => ({
+    id: c.id, title: c.title, source: c.source, accent: c.accent, level: c.difficulty,
+    length: formatTime(c.sentences[c.sentences.length - 1].end), color: colorFor(c.id),
+  }));
   const { attempts, totals, main, loading } = useAttempts();
   const mainCategory = CATEGORIES.find((c) => c.id === main);
   // Filters only change the screen for now; real filtering comes with real data.

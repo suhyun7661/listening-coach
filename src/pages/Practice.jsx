@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PlayIcon, Icon } from '../components/Common';
 import VideoPlayer from '../components/VideoPlayer';
 import HintedBlank from '../components/HintedBlank';
-import { clips, getClip } from '../data/clips';
+import { getClip, getClips } from '../lib/clipStore';
 import { describeHints, getLevelRule } from '../lib/blanks';
 import { saveAttempt } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
@@ -16,7 +16,7 @@ const LEVELS = [1, 2, 3, 4, 5, 6];
 
 export default function Practice() {
   const { clipId } = useParams();
-  const clip = getClip(clipId) ?? clips[0];
+  const clip = getClip(clipId) ?? getClips()[0];
   // key: opening another clip starts a fresh page state
   return <PracticeClip key={clip.id} clip={clip} />;
 }

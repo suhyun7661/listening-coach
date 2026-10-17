@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, Tag } from '../components/Common';
-import { clips } from '../data/clips';
+import { getClip, getClips } from '../lib/clipStore';
 import { gradeAnswer } from '../lib/grading';
 import { saveReview, sentenceFor } from '../lib/notebook';
 import { isDue, scheduleAfter, whenText } from '../lib/spaced';
@@ -17,8 +17,8 @@ const TYPES = [
 const QUIZ_SIZE = 8;
 
 // Every Korean meaning in the clip data: used as wrong answers in Meaning match.
-const MEANING_POOL = [
-  ...new Set(clips.flatMap((c) => c.sentences.flatMap((s) => [...(s.keyWords ?? []).map((k) => k.ko), ...Object.values(s.glosses ?? {})]))),
+const meaningPool = () => [
+  ...new Set(getClips().flatMap((c) => c.sentences.flatMap((s) => [...(s.keyWords ?? []).map((k) => k.ko), ...Object.values(s.glosses ?? {})]))),
 ];
 
 const escapeRegExp = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -33,7 +33,7 @@ function gapSentence(item) {
 
 function meaningOptions(item) {
   const random = seededRandom(item.id);
-  const wrong = MEANING_POOL.filter((m) => m !== item.ko)
+  const wrong = meaningPool().filter((m) => m !== item.ko)
     .map((m) => ({ m, r: random() }))
     .sort((a, b) => a.r - b.r)
     .slice(0, 3)
@@ -168,7 +168,7 @@ export default function VocabQuiz() {
 }
 
 export function Question({ item, type, onAnswered, onSkip, onNext, isLast }) {
-  const clip = clips.find((c) => c.id === item.clipId);
+  const clip = getClip(item.clipId);
   const accent = clip?.accent ?? 'US';
   const gap = useMemo(() => gapSentence(item), [item]);
   const options = useMemo(() => (item.ko ? meaningOptions(item) : null), [item]);

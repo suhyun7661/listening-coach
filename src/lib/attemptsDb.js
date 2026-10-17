@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { generateBlanks } from './blanks';
-import { getClip } from '../data/clips';
+import { getClip } from './clipStore';
 
 // The database stores one row per attempt plus one row per blank (with autoTag and userTag).
 // The sentence text and Korean are not stored again: the blanks are rebuilt from the clip,

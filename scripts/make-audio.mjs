@@ -1,4 +1,6 @@
-// Makes US and UK audio for every sentence, key expression and word in src/data/clips.
+// Makes US and UK audio for every sentence, key expression and word of every published clip:
+// the clips in the Supabase database (including the ones added in the Admin page), plus the
+// sample clips in src/data/clips if the database cannot be reached.
 //
 //   npm run make:audio -- --dry-run   shows what would be made (costs nothing, needs no key)
 //   npm run make:audio                asks Google Cloud Text-to-Speech and saves MP3 files
@@ -6,7 +8,7 @@
 // Files go to the generated-audio folder. Files that already exist are skipped, so it is
 // safe to run again. The Google key is read from .env (GOOGLE_TTS_API_KEY) and never printed.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { clips } from '../src/data/clips/index.js';
+import { clips as sampleClips } from '../src/data/clips/index.js';
 import { parseToken, splitTokens } from '../src/lib/textUtils.js';
 import { sentenceFile, wordFile } from '../src/lib/slug.js';
 
@@ -16,6 +18,41 @@ const VOICES = {
   UK: { languageCode: 'en-GB', name: process.env.TTS_VOICE_UK || 'en-GB-Neural2-A' },
 };
 const dryRun = process.argv.includes('--dry-run');
+
+// Read .env (it holds the Supabase address and the Google key). Not needed for --dry-run.
+try {
+  process.loadEnvFile('.env');
+} catch {
+  // handled below when a key is really needed
+}
+
+// The clips: the database first (public data, read with the public key), else the sample files.
+async function loadClips() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const anon = process.env.VITE_SUPABASE_ANON_KEY;
+  if (url && anon) {
+    try {
+      const response = await fetch(`${url}/rest/v1/clips?select=id,published,sentences(sentence_id,position,text,key_words)&published=eq.true`, {
+        headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+      });
+      if (response.ok) {
+        const rows = await response.json();
+        if (rows.length) {
+          console.log(`Read ${rows.length} clips from the database.`);
+          return rows.map((r) => ({
+            id: r.id,
+            sentences: [...r.sentences].sort((a, b) => a.position - b.position).map((x) => ({ id: x.sentence_id, text: x.text, keyWords: x.key_words ?? [] })),
+          }));
+        }
+      }
+    } catch {
+      // fall through to the sample clips
+    }
+    console.log('Could not read the database, using the sample clips instead.');
+  }
+  return sampleClips;
+}
+const clips = await loadClips();
 
 // What to say, and what to call the file (per accent).
 const jobs = [];
@@ -42,12 +79,6 @@ console.log(`Voices: US = ${VOICES.US.name}, UK = ${VOICES.UK.name}`);
 
 if (dryRun || todo.length === 0) process.exit(0);
 
-try {
-  process.loadEnvFile('.env');
-} catch {
-  console.error('Could not read the .env file.');
-  process.exit(1);
-}
 const key = process.env.GOOGLE_TTS_API_KEY;
 if (!key) {
   console.error('GOOGLE_TTS_API_KEY is missing in .env. Add a line: GOOGLE_TTS_API_KEY=your-key');

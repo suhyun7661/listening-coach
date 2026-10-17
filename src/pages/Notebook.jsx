@@ -4,7 +4,7 @@ import { Tag } from '../components/Common';
 import { removeItem } from '../lib/notebook';
 import { isDue, stepLabel, whenText } from '../lib/spaced';
 import { useNotebook } from '../lib/useNotebook';
-import { getClip } from '../data/clips';
+import { getClip } from '../lib/clipStore';
 
 // Words and expressions saved from your own mistakes, with when each one is next reviewed.
 export default function Notebook() {

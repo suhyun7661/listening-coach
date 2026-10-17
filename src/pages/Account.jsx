@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 
 export default function Account() {
@@ -65,7 +65,10 @@ export default function Account() {
         <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
       </form>
 
-      <p><button type="button" className="btn btn--outline" onClick={logOut}>Sign out</button></p>
+      <p className="account-links">
+        {auth.isAdmin && <Link to="/admin" className="btn btn--secondary">Admin: add and edit clips</Link>}{' '}
+        <button type="button" className="btn btn--outline" onClick={logOut}>Sign out</button>
+      </p>
     </div>
   );
 }

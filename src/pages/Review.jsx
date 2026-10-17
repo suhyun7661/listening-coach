@@ -9,7 +9,7 @@ import { getAttempt, setUserTag } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
 import { addItems, itemsFromSentence } from '../lib/notebook';
 import { playMessage, playSentence } from '../lib/audio';
-import { getClip } from '../data/clips';
+import { getClip } from '../lib/clipStore';
 
 export default function Review() {
   const { attemptId } = useParams();

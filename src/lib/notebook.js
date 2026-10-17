@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { getClip } from '../data/clips';
+import { getClip } from './clipStore';
 import { finalTag } from './errorTags';
 import { isMiss } from './grading';
 

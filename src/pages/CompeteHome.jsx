@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { clips, getClip } from '../data/clips';
+import { getClip, getClips } from '../lib/clipStore';
 import { useAuth } from '../lib/AuthContext';
 import { cleanCode, createRoom, formatCode, joinRoom, listMyRooms } from '../lib/compete';
 
@@ -8,7 +8,8 @@ import { cleanCode, createRoom, formatCode, joinRoom, listMyRooms } from '../lib
 export default function CompeteHome() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [clipId, setClipId] = useState(clips[0].id);
+  const clips = getClips();
+  const [clipId, setClipId] = useState(clips[0]?.id);
   const [sentenceId, setSentenceId] = useState('random');
   const [level, setLevel] = useState(4);
   const [label, setLabel] = useState('');

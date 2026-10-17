@@ -9,6 +9,7 @@ import CompeteRoom from './pages/CompeteRoom';
 import VocabQuiz from './pages/VocabQuiz';
 import Notebook from './pages/Notebook';
 import Admin from './pages/Admin';
+import AdminClip from './pages/AdminClip';
 import History from './pages/History';
 import Login from './pages/Login';
 import Account from './pages/Account';
@@ -32,6 +33,8 @@ export default function App() {
         <Route path="/vocab" element={<VocabQuiz />} />
         <Route path="/notebook" element={<Notebook />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/new" element={<AdminClip />} />
+        <Route path="/admin/edit/:id" element={<AdminClip />} />
         <Route path="*" element={<PlaceholderPage title="Page not found" lead="That page does not exist." />} />
       </Route>
     </Routes>
