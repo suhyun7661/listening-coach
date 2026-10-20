@@ -39,13 +39,34 @@ export default function Library() {
   const clips = getClips().map((c) => ({
     id: c.id, title: c.title, source: c.source, accent: c.accent, level: c.difficulty,
     length: formatTime(c.sentences[c.sentences.length - 1].end), color: colorFor(c.id),
+    // Everything the search box can find: the title, the key expressions (and their Korean) and the sentences.
+    searchText: [
+      c.title,
+      ...c.sentences.flatMap((s) => [s.text, ...(s.keyWords ?? []).flatMap((k) => [k.word, k.ko])]),
+    ].join(' ').toLowerCase(),
   }));
   const { attempts, totals, main, loading } = useAttempts();
   const mainCategory = CATEGORIES.find((c) => c.id === main);
-  // Filters only change the screen for now; real filtering comes with real data.
-  const [level, setLevel] = useState(3);
+  const [level, setLevel] = useState('all');
   const [accent, setAccent] = useState('all');
   const [source, setSource] = useState('all');
+  const [query, setQuery] = useState('');
+
+  const words = query.trim().toLowerCase();
+  const shown = clips.filter(
+    (c) =>
+      (level === 'all' || c.level === level) &&
+      (accent === 'all' || c.accent === accent) &&
+      (source === 'all' || c.source === source) &&
+      (!words || c.searchText.includes(words))
+  );
+  const filtered = level !== 'all' || accent !== 'all' || source !== 'all' || words !== '';
+  const clearFilters = () => {
+    setLevel('all');
+    setAccent('all');
+    setSource('all');
+    setQuery('');
+  };
 
   return (
     <div className="page">
@@ -103,18 +124,30 @@ export default function Library() {
         <label className="search">
           <Icon name="search" />
           <span className="visually-hidden">Search clips or expressions</span>
-          <input type="search" placeholder="Search clips or expressions" />
+          <input type="search" placeholder="Search clips or expressions" value={query} onChange={(e) => setQuery(e.target.value)} />
         </label>
       </div>
 
       <div className="card filters">
-        <Chips label="Level" value={level} onChange={setLevel} options={[1, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: String(n) }))} />
+        <Chips label="Level" value={level} onChange={setLevel} options={[{ value: 'all', label: 'All' }, ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: String(n) }))]} />
         <Chips label="Accent" value={accent} onChange={setAccent} options={[{ value: 'all', label: 'All' }, { value: 'US', label: 'US' }, { value: 'UK', label: 'UK' }]} />
         <Chips label="Source" value={source} onChange={setSource} options={[{ value: 'all', label: 'All' }, { value: 'youtube', label: 'YouTube' }, { value: 'file', label: 'Original video' }]} />
       </div>
 
+      <p className="library-count" role="status">
+        Showing {shown.length} of {clips.length} clip{clips.length === 1 ? '' : 's'}
+        {filtered && <button type="button" className="library-clear" onClick={clearFilters}>Clear filters</button>}
+      </p>
+
+      {shown.length === 0 && (
+        <div className="card library-empty">
+          <p>No clips match these filters.</p>
+          <button type="button" className="btn btn--primary" onClick={clearFilters}>Show all clips</button>
+        </div>
+      )}
+
       <ul className="clip-grid">
-        {clips.map((clip) => (
+        {shown.map((clip) => (
           <li key={clip.id} className="clip">
             <div className="clip__thumb" style={{ background: clip.color }}>
               <span className="clip__source">{sourceLabel[clip.source]}</span>
