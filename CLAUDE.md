@@ -33,8 +33,8 @@
 - Error categories stay CS, SP, V, AC, MI: auto-guessed, learner can change (store autoTag and userTag).
 - Secondary: Competing mode (done).
 - Decided NOT to build: Time Attack, Australian accent, placement test (for now).
-- AI feedback on writing: no university API. Plan: Claude API called from a Supabase Edge Function (key stored as a Supabase secret, never in the frontend), signed-in users only, daily cap per user, short input limit, structured JSON feedback in Korean. Ask me before adding it (new service + paid account).
-- Planned next stages (after the first Higgsfield video test): 17 expression notebook (4 elements) in Admin + Notebook; 18 same-day writing (model sentence + self-check); 19 AI feedback; 20 delayed review with changing blanks; 21 reorganize navigation around the loop (Today queue); 22 fix the V rule (casual expressions, not long academic words).
+- NO AI feedback on writing (decided). After the learner writes a sentence, the app shows a MODEL sentence and a short self-check checklist. No paid AI service. Full plan: docs/redesign-plan.md.
+- Planned next stages (details in docs/redesign-plan.md): 17 expression content (why/similar/examples/writing prompts) in Admin + notebook cards; 18 same-day review flow (report -> expressions -> write with model sentence + self-check); 19 delayed review engine (same audio, changing blanks, missed expression blanked first); 20 "Today" hub + new menu (Today / Practice / Notebook / Compete); 21 fix the V rule and add per-category tips; 22 pilot preparation.
 
 ## Product
 A website that trains Korean learners to understand fast, natural English through fill-in-the-blank dictation on video clips.
