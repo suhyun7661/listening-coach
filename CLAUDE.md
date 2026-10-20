@@ -25,6 +25,17 @@
 - Adding a clip: Admin page (details, transcript, timing helper, Korean, key expressions, save), then `npm run make:audio` and drag the new files from `generated-audio` into the Supabase Storage `audio` folder.
 - If `supabase/schema.sql` changes, I paste the whole file into the Supabase SQL Editor again (it is safe to run twice).
 
+## Product direction (decided 2026-10-20, replaces earlier ideas where they differ)
+- Target user: intermediate/advanced learners, strong in academic vocabulary and reading, weak in fast casual conversation and natural expressions. Complete beginners are NOT the target.
+- Main loop: (1) Dictation with video (speed, level, US/UK) -> (2) Error analysis + same-day review -> (3) Delayed review.
+- Error analysis: diagnostic report (accumulated misses + likely causes); error notebook for casual expressions with exactly four elements: Meaning, Why it has that meaning (written in KOREAN, with English examples), Similar expressions, Example sentences; same-day review = the learner writes their own sentences with the expressions of the day, guided by a short context/situation prompt.
+- Delayed review (days later): same video/audio, but the blanks change each round. The previously missed expression stays blanked in the FIRST review; the other blanks change every round. Also meaning quiz and a repeated writing task (use a new prompt for the same expression).
+- Error categories stay CS, SP, V, AC, MI: auto-guessed, learner can change (store autoTag and userTag).
+- Secondary: Competing mode (done).
+- Decided NOT to build: Time Attack, Australian accent, placement test (for now).
+- AI feedback on writing: no university API. Plan: Claude API called from a Supabase Edge Function (key stored as a Supabase secret, never in the frontend), signed-in users only, daily cap per user, short input limit, structured JSON feedback in Korean. Ask me before adding it (new service + paid account).
+- Planned next stages (after the first Higgsfield video test): 17 expression notebook (4 elements) in Admin + Notebook; 18 same-day writing (model sentence + self-check); 19 AI feedback; 20 delayed review with changing blanks; 21 reorganize navigation around the loop (Today queue); 22 fix the V rule (casual expressions, not long academic words).
+
 ## Product
 A website that trains Korean learners to understand fast, natural English through fill-in-the-blank dictation on video clips.
 Main weaknesses it targets: speed (SP), unfamiliar vocabulary (V), connected speech (CS).
