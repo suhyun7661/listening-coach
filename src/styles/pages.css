@@ -442,3 +442,9 @@ code, kbd { background: var(--bg); border: 1px solid var(--border); border-radiu
 .library-clear { border: 0; background: none; padding: 4px 0; font: inherit; font-weight: 700; color: var(--violet); text-decoration: underline; cursor: pointer; min-height: 32px; }
 .library-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
 .library-empty p { margin: 0; font-weight: 600; }
+
+/* Test-only time travel bar (shown only under npm run dev) */
+.timetravel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 8px var(--gutter); background: var(--yellow); color: var(--ink); border-bottom: 1px solid var(--border-strong); }
+.timetravel__date { margin: 0; font-size: 15px; }
+.timetravel__date .muted { color: var(--ink); }
+.timetravel__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
