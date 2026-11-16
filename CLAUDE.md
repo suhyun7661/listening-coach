@@ -89,7 +89,7 @@ Accessibility: visible keyboard focus, real buttons and labels, respect reduced 
 
 ## Screens (v2)
 1. Home: only two big choices, Practice Mode and Compete Mode.
-2. Practice: (a) Watch the full video; the level buttons unlock after it has played to the end once (every visit). (b) Choose Easy / Intermediate / Hard. (c) Audio-only dictation: sentence numbers on the left (blue = all blanks correct, red = any blank wrong), the sentence plays once by itself, "Replay" up to 3 times ("Replays left: 3/2/1/0"), Enter submits the sentence. (d) Results: "32 / 40 correct" and a button to the Review Report.
+2. Practice: (a) Watch the full video; the level buttons unlock after it has played to the end once (every visit). (b) Choose Easy / Intermediate / Hard. (c) Audio-only dictation: sentence numbers on the left (blue = all blanks correct, red = any blank wrong), the sentence plays once by itself, "Replay" up to 3 times ("Replays left: 3/2/1/0"), Enter moves to the next blank and, on the last blank, submits the sentence. (d) Results: "32 / 40 correct" and a button to the Review Report.
 3. Review Report (the only mistake review): top = biggest weakness (from the learner-confirmed categories). Each incorrect sentence: correct sentence on the left, the learner's answer on the right, category chips (auto guess marked "suggested", one tap to change). "Watch the full video" button: normal player controls without the speed option, and a subtitles toggle (English / Korean / Off). No "Save to notebook".
 4. Compete: Study page (the 15 key expressions with meanings and example usage), then a fixed 15-question quiz (same order for everyone, meaning choice in Korean), then the leaderboard (first attempt only, ties go to the faster time, loaded from saved scores).
 5. Login and Account.
@@ -132,7 +132,7 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 - Blank priority: key expressions, then small fast words, then connected-speech words, then other content words. Use a seeded random so the same sentence and level always give the same blanks.
 - Unlock: the level buttons unlock only after the full video has played to the end once. Not remembered: it starts locked on every visit, and the level is chosen every visit.
 - Audio: `public/audio/walk-with-me.mp3` (made by me from the video). Only the current sentence's part (start to end timestamp) plays, always at 1x. It plays once automatically when the sentence appears. Then "Replay" works up to 3 times; the page shows "Replays left: 3/2/1/0" and the button is disabled at 0. Replays used are saved per sentence.
-- Enter submits the current sentence and moves to the next one. The cursor is always ready in the first blank. Never show the Korean translation of the whole sentence during dictation.
+- Enter moves to the next blank (or word box); Enter on the last blank submits the sentence and moves to the next one. The cursor is always ready in the first blank. Never show the Korean translation of the whole sentence during dictation.
 - After the last sentence, show the results.
 - Sentence numbers on the left: blue = all blanks correct, red = any blank wrong.
 - Grading: ignore case and punctuation; accept contractions and equivalents (gonna = going to, I'm = I am); a one-letter typo on 5+ letter words counts as correct but shows "check spelling"; empty = wrong.

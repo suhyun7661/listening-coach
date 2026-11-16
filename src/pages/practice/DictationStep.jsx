@@ -85,7 +85,11 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
   const onKeyDown = (e) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
-    submit();
+    // Enter goes to the next box; on the last box it submits the sentence.
+    const boxes = [...e.currentTarget.closest('.sentence').querySelectorAll('input')];
+    const next = boxes[boxes.indexOf(e.currentTarget) + 1];
+    if (next) next.focus();
+    else submit();
   };
 
   function leave() {
@@ -147,7 +151,7 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
           <p className="dictation__status" role="status">
             {blocked ? (
               <>Your browser did not play the sound by itself. <button type="button" className="linklike" onClick={playFree}>Play the sentence</button></>
-            ) : playing ? 'Playing…' : 'Type what you hear. Press Enter when you are done.'}
+            ) : playing ? 'Playing…' : 'Type what you hear. Enter moves to the next blank. Enter on the last blank checks the sentence.'}
           </p>
           {note && <p className="dictation__note" role="status">{note}</p>}
 
