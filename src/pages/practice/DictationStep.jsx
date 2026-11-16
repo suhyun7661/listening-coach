@@ -72,7 +72,7 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
       const spelling = typos.map((g) => `“${g.typed}” → “${g.b.answer}”`).join(', ');
       setNote(`Sentence ${index + 1}: correct.${typos.length ? ` Check spelling: ${spelling}.` : ''}`);
     } else {
-      setNote(`Sentence ${index + 1}: not quite. You will see the answers in your report.`);
+      setNote('');
     }
     if (index < sentences.length - 1) {
       setIndex(index + 1);

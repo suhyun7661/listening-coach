@@ -26,10 +26,7 @@ export default function Practice() {
     setSaved({});
     setStep('results');
     const result = await saveAttempt(user, { clipId: clip.id, title: clip.title, level, results: done, replays });
-    setSaved({
-      id: result.id,
-      error: result.failed ? 'We could not save this report to your account, so it is only saved in this browser for now.' : '',
-    });
+    setSaved({ id: result.id });
   }
 
   if (step === 'level') {
