@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import * as local from './attemptStore';
-import { dbGetAttempt, dbListAttempts, dbSaveAttempt, dbSetUserTag, locateBlank } from './attemptsDb';
+import { dbGetAttempt, dbSaveAttempt, dbSetUserTag } from './attemptsDb';
 
 // One place for reports. Signed in: they live in your account (Supabase).
 // Signed out, or if saving to the account fails: they live in this browser only.
@@ -20,10 +20,6 @@ export async function saveAttempt(user, attempt) {
   return { id: local.saveAttempt(attempt), where: 'browser' };
 }
 
-export async function listAttempts(user) {
-  return online(user) ? dbListAttempts() : local.loadAttempts().map((a) => ({ ...a, where: 'browser' }));
-}
-
 // No id = the most recent report.
 export async function getAttempt(user, id) {
   if (online(user) && (!id || UUID.test(id))) return dbGetAttempt(id);
@@ -37,29 +33,4 @@ export async function setUserTag(user, attempt, blankId, nextTags) {
   } else {
     local.saveUserTags(attempt.id, nextTags);
   }
-}
-
-export function countBrowserReports() {
-  return local.loadAttempts().length;
-}
-
-// Moves reports made in this browser into the signed-in account.
-export async function importBrowserReports(user) {
-  if (!online(user)) return 0;
-  const reports = [...local.loadAttempts()].reverse(); // oldest first
-  let moved = 0;
-  for (const r of reports) {
-    try {
-      const id = await dbSaveAttempt(r);
-      for (const [blankId, tag] of Object.entries(r.userTags ?? {})) {
-        if (locateBlank(r.results, blankId)) await dbSetUserTag(id, r.results, blankId, tag);
-      }
-      local.removeAttempt(r.id);
-      moved += 1;
-    } catch (error) {
-      console.warn('Could not move one report', error);
-      break;
-    }
-  }
-  return moved;
 }

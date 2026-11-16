@@ -7,9 +7,6 @@ import { allBlanks, computeScore, finalTag, summarizeTags } from '../lib/errorTa
 import { isMiss } from '../lib/grading';
 import { getAttempt, setUserTag } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
-import { addItems, itemsFromSentence } from '../lib/notebook';
-import { playMessage, playSentence } from '../lib/audio';
-import { getClip } from '../lib/clipStore';
 
 export default function Review() {
   const { attemptId } = useParams();
@@ -19,9 +16,6 @@ export default function Review() {
   const [userTags, setUserTags] = useState({});
   const [showScript, setShowScript] = useState(false);
   const [tagError, setTagError] = useState('');
-  const [saveNotes, setSaveNotes] = useState({}); // message under each Save button
-  const [compare, setCompare] = useState(null); // sentence id whose Compare panel is open
-  const [compareNote, setCompareNote] = useState('');
 
   useEffect(() => {
     if (auth.loading) return undefined;
@@ -50,9 +44,8 @@ export default function Review() {
     return (
       <div className="page">
         <h1 className="page__title">Review</h1>
-        <p className="page__lead">{attemptId ? 'That report could not be found.' : 'There is nothing to review yet. Finish a practice clip and press “Submit clip for grading”.'}</p>
-        <Link to="/history" className="btn btn--outline">All past reports</Link>{' '}
-        <Link to="/" className="btn btn--primary">Go to the library</Link>
+        <p className="page__lead">{attemptId ? 'That report could not be found.' : 'There is nothing to review yet. Finish a practice round and press “Submit clip for grading”.'}</p>
+        <Link to="/practice" className="btn btn--primary">Go to Practice</Link>
       </div>
     );
   }
@@ -69,33 +62,11 @@ export default function Review() {
     }
   }
 
-  // Save the missed words of one sentence (or of every sentence) to the notebook.
-  async function saveWords(key, rows) {
-    if (!auth.user) return setSaveNotes((n) => ({ ...n, [key]: 'Sign in to save words to your notebook.' }));
-    const items = rows.flatMap((r) => itemsFromSentence(r, attempt.clipId, userTags));
-    if (!items.length) return setSaveNotes((n) => ({ ...n, [key]: 'No words to save here.' }));
-    try {
-      const added = await addItems(auth.user.id, items);
-      const text = added ? `Saved ${added} new word${added > 1 ? 's' : ''} to your notebook.` : 'Already in your notebook.';
-      return setSaveNotes((n) => ({ ...n, [key]: text }));
-    } catch {
-      return setSaveNotes((n) => ({ ...n, [key]: 'Could not save. Please try again.' }));
-    }
-  }
-
-  // Plays the US or UK recording of one sentence.
-  async function playCompare(row, accent) {
-    const sentence = getClip(attempt.clipId)?.sentences.find((x) => x.id === row.sentenceId);
-    if (!sentence) return;
-    const result = await playSentence(attempt.clipId, sentence, accent);
-    setCompareNote(playMessage(result, accent));
-  }
-
   const nextLevel = Math.min(6, attempt.level + 1);
 
   return (
     <div className="page">
-      <Link to={`/practice/${attempt.clipId}`} className="back-link">‹ Back to clip</Link>
+      <Link to="/practice" className="back-link">‹ Back to Practice</Link>
       <h1 className="page__title">Review: {attempt.title}</h1>
 
       {location.state?.notSaved && (
@@ -109,7 +80,7 @@ export default function Review() {
           <span className="score-card__value">{score.percent}%</span>
           <span className="score-card__detail">{score.correct} of {score.total} blanks correct</span>
           {almost > 0 && <span className="score-card__sub">{almost} almost right (half a point each)</span>}
-          <span className="score-card__sub">Level {attempt.level} · played at {attempt.speed}x</span>
+          <span className="score-card__sub">Level {attempt.level}</span>
         </section>
 
         <ErrorSummary counts={counts} />
@@ -117,16 +88,11 @@ export default function Review() {
         <section className="card" aria-labelledby="next-h">
           <h2 id="next-h" className="side-title">Next steps</h2>
           <div className="stack">
-            <Link to="/vocab" className="btn btn--primary btn--block">Start vocab quiz</Link>
-            <button type="button" className="btn btn--outline btn--block" onClick={() => saveWords('all', results)}>+ Save all missed words to notebook</button>
-            {saveNotes.all && <p className="muted save-note" role="status">{saveNotes.all}</p>}
-            <Link to="/history" className="btn btn--outline btn--block">All past reports</Link>
-            <Link to="/progress" className="btn btn--outline btn--block">My progress</Link>
             <button type="button" className="btn btn--outline btn--block" aria-expanded={showScript} onClick={() => setShowScript(!showScript)}>
               Full script (English + Korean)
             </button>
             {attempt.level < 6 && (
-              <Link to={`/practice/${attempt.clipId}?level=${nextLevel}`} className="btn btn--outline btn--block">Try again at Level {nextLevel}</Link>
+              <Link to={`/practice?level=${nextLevel}`} className="btn btn--outline btn--block">Try again at Level {nextLevel}</Link>
             )}
           </div>
         </section>
@@ -197,22 +163,6 @@ export default function Review() {
                     {misses.length === 0 && <span className="tag tag--AC">Almost</span>}
                   </div>
                 )}
-                {compare === row.sentenceId && (
-                  <div className="compare" role="group" aria-label="Compare accents">
-                    <p className="muted">Listen to the same sentence in both accents.</p>
-                    <div className="review-row__btns">
-                      <button type="button" className="btn btn--secondary btn--small" onClick={() => playCompare(row, 'US')}>Play US</button>
-                      <button type="button" className="btn btn--secondary btn--small" onClick={() => playCompare(row, 'UK')}>Play UK</button>
-                    </div>
-                    {compareNote && <p className="muted voice-note" role="status">{compareNote}</p>}
-                  </div>
-                )}
-                <div className="review-row__btns">
-                  <button type="button" className="btn btn--secondary btn--small" disabled title="Coming in a later stage">Replay</button>
-                  <button type="button" className="btn btn--outline btn--small" aria-expanded={compare === row.sentenceId} onClick={() => { setCompare(compare === row.sentenceId ? null : row.sentenceId); setCompareNote(''); }}>Compare US / UK</button>
-                </div>
-                <button type="button" className="btn btn--outline btn--small btn--block" onClick={() => saveWords(row.sentenceId, [row])} disabled={perfect}>+ Save to notebook</button>
-                {saveNotes[row.sentenceId] && <p className="muted save-note" role="status">{saveNotes[row.sentenceId]}</p>}
               </div>
             </article>
           );

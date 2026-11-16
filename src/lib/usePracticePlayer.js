@@ -1,19 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-// Playback logic for Practice mode: replay one sentence, loop it, change speed.
+// Playback logic for Practice mode: replay one sentence, loop it. Always normal speed (1x).
 // sentenceRef always points at the sentence the learner is looking at ({ start, end }).
 // Changing sentences never pauses or moves the video. Only the buttons do that.
 export function usePracticePlayer(sentenceRef) {
   const remote = useRef(null);          // the player's remote control
   const range = useRef(null);           // {start, end} while a sentence is being replayed
   const loopOn = useRef(false);
-  const rate = useRef(1);
   const lastSeek = useRef(0);
 
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeedState] = useState(1);
   const [loop, setLoopState] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -26,7 +24,6 @@ export function usePracticePlayer(sentenceRef) {
     () => ({
       onReady: (r) => {
         remote.current = r;
-        r.setRate(rate.current);
         setReady(true);
       },
       onDuration: (d) => d && setDuration(d),
@@ -73,13 +70,7 @@ export function usePracticePlayer(sentenceRef) {
     }
   }, [playing]);
 
-  const setSpeed = useCallback((value) => {
-    rate.current = value;
-    setSpeedState(value);
-    remote.current?.setRate(value);
-  }, []);
-
-  return { handlers, time, duration, playing, speed, loop, ready, replay, toggleLoop, togglePlay, setSpeed };
+  return { handlers, time, duration, playing, loop, ready, replay, toggleLoop, togglePlay };
 }
 
 export function formatTime(seconds) {

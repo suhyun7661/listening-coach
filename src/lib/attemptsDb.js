@@ -70,7 +70,6 @@ export function rebuildAttempt(row) {
     clipId: row.clip_id,
     title: clip.title,
     level: row.level,
-    speed: Number(row.speed),
     createdAt: row.created_at,
     results,
     userTags,
@@ -78,14 +77,14 @@ export function rebuildAttempt(row) {
   };
 }
 
-export async function dbSaveAttempt({ clipId, level, speed, results }) {
+export async function dbSaveAttempt({ clipId, level, results }) {
   const rows = rowsFromResults(results);
   const points = rows.reduce((sum, r) => sum + Number(r.points), 0);
   const total = rows.length;
 
   const { data, error } = await supabase
     .from('attempts')
-    .insert({ clip_id: clipId, level, speed, points, total_blanks: total, percent: total ? Math.round((points / total) * 100) : 0 })
+    .insert({ clip_id: clipId, level, points, total_blanks: total, percent: total ? Math.round((points / total) * 100) : 0 })
     .select('id')
     .single();
   if (error) throw error;
@@ -96,16 +95,6 @@ export async function dbSaveAttempt({ clipId, level, speed, results }) {
     throw blanksError;
   }
   return data.id;
-}
-
-export async function dbListAttempts() {
-  const { data, error } = await supabase
-    .from('attempts')
-    .select('*, blank_results(*)')
-    .order('created_at', { ascending: false })
-    .limit(100);
-  if (error) throw error;
-  return data.map(rebuildAttempt).filter(Boolean);
 }
 
 export async function dbGetAttempt(id) {

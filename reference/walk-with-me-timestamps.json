@@ -1,0 +1,128 @@
+[
+  {
+    "line": 1,
+    "speaker": "Maya",
+    "text": "Ryan, got a sec? We've got a problem.",
+    "start": 3.58,
+    "end": 5.76
+  },
+  {
+    "line": 2,
+    "speaker": "Ryan",
+    "text": "Walk with me. I'm already late. What's going on?",
+    "start": 6.12,
+    "end": 7.86
+  },
+  {
+    "line": 3,
+    "speaker": "Maya",
+    "text": "Henderson's getting cold feet. He wants to pull out of the deal.",
+    "start": 8.42,
+    "end": 10.48
+  },
+  {
+    "line": 4,
+    "speaker": "Ryan",
+    "text": "You're kidding me. We're this close to closing.",
+    "start": 10.9,
+    "end": 12.7
+  },
+  {
+    "line": 5,
+    "speaker": "Maya",
+    "text": "I know. He says the numbers don't add up.",
+    "start": 13.0,
+    "end": 14.94
+  },
+  {
+    "line": 6,
+    "speaker": "Ryan",
+    "text": "Then let's cut to the chase. Is he bluffing, or is he actually walking?",
+    "start": 15.62,
+    "end": 19.16
+  },
+  {
+    "line": 7,
+    "speaker": "Maya",
+    "text": "Honestly? I think he's on the fence.",
+    "start": 20.28,
+    "end": 22.2
+  },
+  {
+    "line": 8,
+    "speaker": "Ryan",
+    "text": "Good. On the fence I can work with. Set up a call for ten.",
+    "start": 23.42,
+    "end": 27.56
+  },
+  {
+    "line": 9,
+    "speaker": "Maya",
+    "text": "Already did. I figured you'd wanna jump on it.",
+    "start": 28.08,
+    "end": 29.98
+  },
+  {
+    "line": 10,
+    "speaker": "Ryan",
+    "text": "Look at you, one step ahead. What're you gonna tell him?",
+    "start": 30.82,
+    "end": 33.42
+  },
+  {
+    "line": 11,
+    "speaker": "Maya",
+    "text": "That if he backs out now, he's leaving money on the table.",
+    "start": 34.04,
+    "end": 36.34
+  },
+  {
+    "line": 12,
+    "speaker": "Ryan",
+    "text": "And if he doesn't buy it?",
+    "start": 36.74,
+    "end": 37.8
+  },
+  {
+    "line": 13,
+    "speaker": "Maya",
+    "text": "Then we play hardball. Their offer expires Friday.",
+    "start": 38.36,
+    "end": 41.08
+  },
+  {
+    "line": 14,
+    "speaker": "Ryan",
+    "text": "That's a long shot, but it might work. Don't drop the ball on this one.",
+    "start": 41.96,
+    "end": 45.3
+  },
+  {
+    "line": 15,
+    "speaker": "Maya",
+    "text": "I won't. I've got this.",
+    "start": 47.96,
+    "end": 49.54
+  },
+  {
+    "line": 16,
+    "speaker": "Ryan",
+    "text": "I know you do. That's why it's yours. Ten o'clock. Don't be late.",
+    "start": 51.14,
+    "end": 54.6
+  },
+  {
+    "line": 17,
+    "speaker": "Maya",
+    "text": "Says the guy who's already late.",
+    "start": 55.18,
+    "end": 56.56
+  },
+  {
+    "line": 18,
+    "speaker": "Ryan",
+    "text": "Touché.",
+    "start": 56.56,
+    "end": 57.72
+  }
+]

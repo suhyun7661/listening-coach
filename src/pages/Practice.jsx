@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PlayIcon, Icon } from '../components/Common';
 import VideoPlayer from '../components/VideoPlayer';
 import HintedBlank from '../components/HintedBlank';
-import { getClip, getClips } from '../lib/clipStore';
+import { getClips } from '../lib/clipStore';
 import { describeHints, getLevelRule } from '../lib/blanks';
 import { saveAttempt } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
@@ -11,20 +11,17 @@ import { buildResults } from '../lib/errorTags';
 import { AUTO_ADVANCE_DELAY, useDictation } from '../lib/useDictation';
 import { formatTime, usePracticePlayer } from '../lib/usePracticePlayer';
 
-const SPEEDS = [0.5, 0.75, 1, 1.25];
 const LEVELS = [1, 2, 3, 4, 5, 6];
 
 export default function Practice() {
-  const { clipId } = useParams();
-  const clip = getClip(clipId) ?? getClips()[0];
-  // key: opening another clip starts a fresh page state
+  const clip = getClips()[0]; // the app has one clip: Walk With Me
   return <PracticeClip key={clip.id} clip={clip} />;
 }
 
 function PracticeClip({ clip }) {
   const [search] = useSearchParams();
   const navigate = useNavigate();
-  const { accent: userAccent, user } = useAuth();
+  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const fromUrl = Number(search.get('level'));
   const [level, setLevel] = useState(fromUrl >= 1 && fromUrl <= 6 ? fromUrl : clip.difficulty);
@@ -42,12 +39,11 @@ function PracticeClip({ clip }) {
   const total = player.duration || 1;
   const pct = (t) => `${Math.min(100, (t / total) * 100)}%`;
   // Grade everything, remember it for the Review page, and go there.
-  // userAccent comes from the learner's account (US if they are not signed in).
   async function submit() {
     if (saving) return;
     setSaving(true);
-    const results = buildResults(clip.sentences, tokensBySentence, dictation.answers, { clipAccent: clip.accent, userAccent });
-    const saved = await saveAttempt(user, { clipId: clip.id, title: clip.title, level, speed: player.speed, results });
+    const results = buildResults(clip.sentences, tokensBySentence, dictation.answers);
+    const saved = await saveAttempt(user, { clipId: clip.id, title: clip.title, level, results });
     navigate(`/review/${saved.id}`, { state: { notSaved: Boolean(saved.failed) } });
   }
 
@@ -58,7 +54,7 @@ function PracticeClip({ clip }) {
 
   return (
     <div className="page">
-      <Link to="/" className="back-link">‹ Back to library</Link>
+      <Link to="/" className="back-link">‹ Back to home</Link>
       <div className="practice-head">
         <h1 className="page__title">{clip.title}</h1>
         <div className="practice-head__pills">
@@ -102,16 +98,6 @@ function PracticeClip({ clip }) {
               <button type="button" className={`btn btn--outline${player.loop ? ' is-on' : ''}`} aria-pressed={player.loop} onClick={() => { player.toggleLoop(); dictation.focusBlank(); }} disabled={!player.ready}>
                 <Icon name="loop" /> Loop sentence
               </button>
-              <div className="speed" role="group" aria-label="Speed">
-                <span className="speed__label">Speed</span>
-                <div className="speed__options">
-                  {SPEEDS.map((s) => (
-                    <button key={s} type="button" className={`speed__btn${player.speed === s ? ' is-selected' : ''}`} aria-pressed={player.speed === s} onClick={() => { player.setSpeed(s); dictation.focusBlank(); }}>
-                      {s}x
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </section>
 

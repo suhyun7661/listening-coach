@@ -21,7 +21,6 @@ export default function FilePlayer({ src, handlers }) {
       play: () => el.play(),
       pause: () => el.pause(),
       seek: (t) => { el.currentTime = t; },
-      setRate: (r) => { el.playbackRate = r; },
       getTime: () => el.currentTime,
     });
     const timer = setInterval(() => latest.current.onTime(el.currentTime), 100);

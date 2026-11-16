@@ -2,11 +2,8 @@ import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 
 const MENU = [
-  { to: '/', label: 'Library', end: true },
   { to: '/practice', label: 'Practice' },
   { to: '/compete', label: 'Compete' },
-  { to: '/vocab', label: 'Vocab quiz' },
-  { to: '/notebook', label: 'Notebook' },
 ];
 
 function HeadphonesIcon() {

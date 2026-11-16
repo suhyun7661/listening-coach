@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Load the learner's profile (display name and accent). Row Level Security means
+  // Load the learner's profile (display name). Row Level Security means
   // this can only ever return their own row.
   const userId = session?.user?.id;
   useEffect(() => {
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
     let alive = true;
     supabase
       .from('profiles')
-      .select('display_name, accent, is_admin')
+      .select('display_name')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data }) => alive && setProfile(data));
@@ -75,12 +75,12 @@ export function AuthProvider({ children }) {
   const signOut = useCallback(() => supabase.auth.signOut(), []);
 
   const updateProfile = useCallback(
-    async ({ displayName, accent }) => {
+    async ({ displayName }) => {
       const { data, error } = await supabase
         .from('profiles')
-        .update({ display_name: displayName, accent })
+        .update({ display_name: displayName })
         .eq('id', userId)
-        .select('display_name, accent, is_admin')
+        .select('display_name')
         .single();
       if (error) return { error: friendly(error) };
       setProfile(data);
@@ -95,9 +95,6 @@ export function AuthProvider({ children }) {
       loading,
       user: session?.user ?? null,
       profile,
-      // The learner's own accent decides which answers count as "accent" mistakes.
-      accent: profile?.accent ?? 'US',
-      isAdmin: Boolean(profile?.is_admin),
       signUp,
       signIn,
       signOut,

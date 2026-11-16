@@ -20,7 +20,7 @@ function loadYouTubeApi() {
 }
 
 // Every player gives the page the same small remote control:
-// { play, pause, seek, setRate, getTime }
+// { play, pause, seek, getTime }
 export default function YouTubePlayer({ videoId, handlers }) {
   const host = useRef(null);
   const latest = useRef(handlers);
@@ -46,7 +46,6 @@ export default function YouTubePlayer({ videoId, handlers }) {
               play: () => player.playVideo(),
               pause: () => player.pauseVideo(),
               seek: (t) => player.seekTo(t, true),
-              setRate: (r) => player.setPlaybackRate(r),
               getTime: () => player.getCurrentTime(),
             });
             timer = setInterval(() => latest.current.onTime(player.getCurrentTime()), 100);

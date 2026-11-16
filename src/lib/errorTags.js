@@ -1,5 +1,5 @@
 import { gradeAnswer, isMiss } from './grading';
-import { levenshtein, normalize } from './textUtils';
+import { normalize } from './textUtils';
 
 export const CATEGORIES = [
   { id: 'CS', label: 'Connected speech', ko: '연음·축약', description: 'Words were linked or reduced in natural speech.' },
@@ -25,8 +25,8 @@ const REDUCTIONS = new Set([
 // 1. CS: reduced spelling, two words merged/split, or the word was cut short (mount -> mountain)
 // 2. V:  key expression, or an uncommon word of 6+ letters
 // 3. MI: most of the sentence was missed (3+ blanks, 60%+ missed)
-// 4. AC: clip accent differs from the learner's usual accent and the answer sounds close
-// 5. SP: everything else, including empty blanks
+// 4. SP: everything else, including empty blanks
+// (There is no automatic guess for AC any more: the app has one accent, so the learner can still pick Accent by hand.)
 export function guessTag({
   answer,
   correct,
@@ -35,8 +35,6 @@ export function guessTag({
   isKeyWord = false,
   sentenceMissRate = 0,
   blanksInSentence = 1,
-  clipAccent = '',
-  userAccent = 'US',
 }) {
   const a = normalize(answer);
   const c = normalize(correct);
@@ -52,12 +50,11 @@ export function guessTag({
   }
   if (isKeyWord || (!COMMON_WORDS.has(c) && c.length >= 6)) return 'V';
   if (blanksInSentence >= 3 && sentenceMissRate >= 0.6) return 'MI';
-  if (a && clipAccent && clipAccent !== userAccent && levenshtein(a, c) <= 2) return 'AC';
   return 'SP';
 }
 
 // Grades every blank and adds an automatic tag to each miss.
-export function buildResults(sentences, tokensBySentence, answers, { clipAccent = '', userAccent = 'US' } = {}) {
+export function buildResults(sentences, tokensBySentence, answers) {
   return sentences.map((sentence, si) => {
     const sentenceId = sentence.id ?? `s${si + 1}`;
     let blankNumber = 0;
@@ -84,8 +81,6 @@ export function buildResults(sentences, tokensBySentence, answers, { clipAccent 
           isKeyWord: token.isKeyWord,
           sentenceMissRate: missRate,
           blanksInSentence: blanks.length,
-          clipAccent,
-          userAccent,
         }),
       };
     });
