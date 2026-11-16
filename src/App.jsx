@@ -4,6 +4,7 @@ import PlaceholderPage from './components/PlaceholderPage';
 import Home from './pages/Home';
 import Practice from './pages/Practice';
 import Review from './pages/Review';
+import Compete from './pages/Compete';
 import Login from './pages/Login';
 import Account from './pages/Account';
 
@@ -17,7 +18,7 @@ export default function App() {
         <Route path="/review/:attemptId" element={<Review />} />
         <Route path="/login" element={<Login />} />
         <Route path="/account" element={<Account />} />
-        <Route path="/compete" element={<PlaceholderPage title="Compete mode" lead="The expression quiz and leaderboard are coming soon." />} />
+        <Route path="/compete" element={<Compete />} />
         <Route path="*" element={<PlaceholderPage title="Page not found" lead="That page does not exist." />} />
       </Route>
     </Routes>
