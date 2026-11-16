@@ -98,7 +98,7 @@ export function computeScore(results) {
   const blanks = allBlanks(results);
   const points = blanks.reduce((sum, b) => sum + b.points, 0);
   const total = blanks.length;
-  return { points, total, correct: blanks.filter((b) => b.status === 'correct').length, percent: total ? Math.round((points / total) * 100) : 0 };
+  return { points, total, correct: blanks.filter((b) => !isMiss(b)).length, percent: total ? Math.round((points / total) * 100) : 0 };
 }
 
 // The user's choice overrides the automatic guess.

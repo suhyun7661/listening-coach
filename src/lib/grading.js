@@ -20,7 +20,7 @@ const EQUIVALENTS = {
   ok: ['okay'],
 };
 
-// status: 'correct' (1 point) | 'almost' (0.5, one-letter typo) | 'wrong' | 'empty'
+// status: 'correct' | 'almost' (one-letter typo: counts as correct, but we say "check spelling") | 'wrong' | 'empty'
 export function gradeAnswer(answer, correct) {
   const a = normalize(answer);
   const c = normalize(correct);
@@ -29,7 +29,7 @@ export function gradeAnswer(answer, correct) {
     return { status: 'correct', points: 1 };
   }
   if (c.length >= 5 && levenshtein(stripApostrophes(a), stripApostrophes(c)) === 1) {
-    return { status: 'almost', points: 0.5 };
+    return { status: 'almost', points: 1 };
   }
   return { status: 'wrong', points: 0 };
 }

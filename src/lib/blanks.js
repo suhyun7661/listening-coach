@@ -1,28 +1,27 @@
 import { parseToken, seededRandom, splitTokens } from './textUtils';
 
-// One rule per level. Each level up removes one kind of hint.
+// Three levels. Each level up removes hints.
+//   blanks:  [fewer, more, words needed for "more"] or 'half' (about half of the words)
 //   meaning: 'all'      -> Korean meaning shown above every blank
 //            'keyWords' -> Korean meaning only above key expressions
 //            'none'     -> no Korean meaning
+export const LEVEL_NAMES = { 1: 'Easy', 2: 'Intermediate', 3: 'Hard' };
 export const LEVEL_RULES = {
-  1: { blanks: 1, meaning: 'all', firstLetter: true, letterCount: true, sceneSummary: true },
-  2: { blanks: 2, meaning: 'all', firstLetter: false, letterCount: true, sceneSummary: true },
-  3: { blanks: 3, meaning: 'keyWords', firstLetter: false, letterCount: true, sceneSummary: false },
-  4: { blanks: 4, meaning: 'none', firstLetter: false, letterCount: true, sceneSummary: false },
-  5: { blanks: 'half', meaning: 'none', firstLetter: false, letterCount: false, sceneSummary: false },
-  6: { blanks: 'all', meaning: 'none', firstLetter: false, letterCount: false, sceneSummary: false },
+  1: { blanks: [1, 2, 5], meaning: 'all', firstLetter: true, letterCount: true },
+  2: { blanks: [3, 4, 7], meaning: 'keyWords', firstLetter: false, letterCount: true },
+  3: { blanks: 'half', meaning: 'none', firstLetter: false, letterCount: false },
 };
 
 export function getLevelRule(level) {
   return LEVEL_RULES[level] ?? LEVEL_RULES[3];
 }
 
-// Short description for the page, e.g. "Korean meaning · letter count".
+// Short description for the page, e.g. "Korean meaning, first letter, letter count".
 export function describeHints(level) {
   const rule = getLevelRule(level);
   const parts = [];
   if (rule.meaning === 'all') parts.push('Korean meaning');
-  if (rule.meaning === 'keyWords') parts.push('Korean meaning for key expressions');
+  if (rule.meaning === 'keyWords') parts.push('Korean meaning for key expressions only');
   if (rule.firstLetter) parts.push('first letter');
   if (rule.letterCount) parts.push('letter count');
   return parts.length ? parts.join(', ') : 'No hints';
@@ -42,21 +41,29 @@ const CONNECTED_WORDS = new Set(
   "gonna wanna gotta kinda sorta lemme gimme dunno outta did going want let what don't didn't can't won't i'm you're it's that's".split(' ')
 );
 
-// Maps each important token of a key expression to its Korean meaning.
-// "on a whim" -> { whim: { ko, phrase } }
-function keyWordMap(keyWords = []) {
+// Finds where each key expression sits in the sentence and maps the important words of that
+// exact spot (by token index) to its Korean meaning. A word like "got" is only a key word
+// where it is really part of "got a sec", not everywhere in the sentence.
+const plain = (w) => w.toLowerCase().replace(/[’]/g, "'");
+function keyWordMap(words, keyWords = []) {
   const map = new Map();
   keyWords.forEach((kw) => {
-    const tokens = kw.word.toLowerCase().split(/\s+/);
-    const important = tokens.filter((t) => !FUNCTION_WORDS.has(t));
-    (important.length ? important : tokens).forEach((t) => map.set(t, { ko: kw.ko, phrase: kw.word }));
+    const phrase = kw.word.split(/\s+/).map(plain);
+    for (let i = 0; i + phrase.length <= words.length; i += 1) {
+      if (phrase.every((p, j) => plain(words[i + j].word) === p)) {
+        const span = words.slice(i, i + phrase.length);
+        const important = span.filter((t) => !FUNCTION_WORDS.has(plain(t.word)));
+        (important.length ? important : span).forEach((t) => map.set(t.index, { ko: kw.ko, phrase: kw.word }));
+        break;
+      }
+    }
   });
   return map;
 }
 
-function priority(word, keyMap) {
-  const w = word.toLowerCase();
-  if (keyMap.has(w)) return 4;
+function priority(token, keyMap) {
+  const w = token.word.toLowerCase();
+  if (keyMap.has(token.index)) return 4;
   if (SPEED_WORDS.has(w)) return 3;
   if (CONNECTED_WORDS.has(w)) return 2;
   if (!FUNCTION_WORDS.has(w)) return 1;
@@ -70,11 +77,13 @@ export function generateBlanks(sentence, level) {
   const words = tokens.filter((t) => t.word);
 
   let target;
-  if (rule.blanks === 'all') target = words.length;
-  else if (rule.blanks === 'half') target = Math.max(1, Math.ceil(words.length / 2));
-  else target = Math.min(rule.blanks, words.length);
+  if (rule.blanks === 'half') target = Math.max(1, Math.ceil(words.length / 2));
+  else {
+    const [fewer, more, needed] = rule.blanks;
+    target = Math.min(words.length >= needed ? more : fewer, words.length);
+  }
 
-  const keyMap = keyWordMap(sentence.keyWords);
+  const keyMap = keyWordMap(words, sentence.keyWords);
   const glosses = Object.fromEntries(
     Object.entries(sentence.glosses ?? {}).map(([k, v]) => [k.toLowerCase(), v])
   );
@@ -82,7 +91,7 @@ export function generateBlanks(sentence, level) {
 
   const chosen = new Set(
     words
-      .map((t) => ({ t, p: priority(t.word, keyMap), r: random() }))
+      .map((t) => ({ t, p: priority(t, keyMap), r: random() }))
       .sort((a, b) => b.p - a.p || a.r - b.r)
       .slice(0, target)
       .map((x) => x.t.index)
@@ -91,7 +100,7 @@ export function generateBlanks(sentence, level) {
   return tokens.map((t) => {
     if (!chosen.has(t.index)) return { type: 'text', ...t };
     const lower = t.word.toLowerCase();
-    const key = keyMap.get(lower);
+    const key = keyMap.get(t.index);
     let meaning = null;
     if (rule.meaning === 'all') meaning = key?.ko ?? glosses[lower] ?? null;
     if (rule.meaning === 'keyWords') meaning = key?.ko ?? null;

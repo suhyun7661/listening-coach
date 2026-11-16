@@ -30,7 +30,7 @@ Listening Coach is an English listening practice website for Korean learners who
 - Stage 7 (Deploy to Vercel) is on hold. `vercel.json` is already prepared and stays unused. Continue with the other stages; ask me before deploying. The goal is a public URL for my professor, but only at the very end and only when I say so.
 
 ## Current status (updated 2026-11-16)
-- The v2 design is decided (reference/feature-design-v2.md). Stage 17 (clean-up and removals) is DONE and committed. The app now has one clip (Walk With Me), a Home with two choices, Practice (still the OLD video-based dictation with 6 levels), Review, Login/Account, and a Compete placeholder page. Stages 18-22 are not started. Waiting for my OK to start Stage 18 (needs `public/audio/walk-with-me.mp3` from me).
+- The v2 design is decided (reference/feature-design-v2.md). Stages 17 (clean-up) and 18 (Practice) are DONE. Practice now works: Watch the video, unlock levels, choose Easy / Intermediate / Hard, audio-only dictation from `public/audio/walk-with-me.mp3`, Results, saved attempt. Review still shows the old report (Stage 19 rebuilds it). Compete is a placeholder. Stages 19-22 are not started; waiting for my OK to start Stage 19. I must run `supabase/stage-18.sql` once in the Supabase SQL Editor (adds the `replays` column).
 - Database: I must run `supabase/cleanup-v2.sql` ONCE in the Supabase SQL Editor (it drops the old room, notebook, clips and admin parts and keeps users, attempts and reports). Then `supabase/schema.sql` can be run (safe to repeat).
 - Video: `public/videos/walk-with-me.mp4` (about 58 s, 18 lines), used directly from the `public/` folder. Not managed through Admin or Supabase.
 - Audio: I make `public/audio/walk-with-me.mp3` myself (extracted from the video) and save it there. Claude does not install ffmpeg or extract audio; the app just loads that file.
@@ -168,16 +168,15 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 ## Build stages
 Done: old stages 1-6, 8-15 and v2 Stage 17. Stage 7 (deploy) on hold. The v2 stages 18-22 are decided but NOT started; do them one at a time and wait for my OK.
 17. DONE. Clean-up and removals (one clip from `public/`, no sample clips, no speed / accents / TTS, no History / Progress / Notebook / Vocab quiz, no rooms / Realtime, no Admin; database cleanup in `supabase/cleanup-v2.sql`).
-18. Practice: Watch step, level unlock, 3 levels, audio-only dictation from my mp3, replays, Enter to submit, blue/red sentence numbers, results, save to Supabase (replays per sentence).
+18. DONE. Practice: Watch step, level unlock, 3 levels, audio-only dictation from my mp3, replays, Enter to submit, blue/red sentence numbers, results, save to Supabase (replays per sentence; needs `supabase/stage-18.sql`).
 19. Review Report: correct sentence left / learner answer right, five categories with manual change, weakness at the top, "Watch the full video" with subtitles toggle.
 20. Compete quiz: study page, fixed 15 questions, saved first-attempt leaderboard, new quiz-scores table.
 21. Home with two choices and a simple menu; "try Compete" after Practice.
 22. Deploy to a public URL (only when I say so), then the professor's test.
 
 ## Known issues and next fixes (2026-11-16)
-- Practice still uses the OLD video-based dictation (6 levels, countdown, Loop sentence). Stage 18 replaces it. The Easy level needs Korean word meanings (`glosses`) for the Walk With Me sentences; they are empty now and must be written in Stage 18.
-- `public/audio/walk-with-me.mp3` must exist (I make it) before Stage 18.
+- Easy-level Korean word meanings (`glosses`) are written for all Walk With Me sentences (Stage 18). I should listen-test the audio in the browser once (the sentence must start and stop at the right places).
 - The video file (about 28 MB) and `public/` are not committed to git yet; they must be committed before deploying (decide with me first).
 - The "V" error guess marks any uncommon word of 6+ letters as unfamiliar, which is wrong for learners strong in academic vocabulary. Fix with the Review Report stage.
-- The attempts table has no place yet for "replays used per sentence"; this needs a small schema change.
+- Replays per sentence are saved in `attempts.replays` after I run `supabase/stage-18.sql`.
 - The automatic guess for AC (Accent) was removed (the app has one accent). The learner can still pick Accent by hand.

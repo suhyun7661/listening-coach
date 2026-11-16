@@ -5,6 +5,7 @@ import ErrorTagPicker from '../components/ErrorTagPicker';
 import { Tag } from '../components/Common';
 import { allBlanks, computeScore, finalTag, summarizeTags } from '../lib/errorTags';
 import { isMiss } from '../lib/grading';
+import { LEVEL_NAMES } from '../lib/blanks';
 import { getAttempt, setUserTag } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
 
@@ -44,7 +45,7 @@ export default function Review() {
     return (
       <div className="page">
         <h1 className="page__title">Review</h1>
-        <p className="page__lead">{attemptId ? 'That report could not be found.' : 'There is nothing to review yet. Finish a practice round and press “Submit clip for grading”.'}</p>
+        <p className="page__lead">{attemptId ? 'That report could not be found.' : 'There is nothing to review yet. Finish a Practice round first.'}</p>
         <Link to="/practice" className="btn btn--primary">Go to Practice</Link>
       </div>
     );
@@ -62,8 +63,6 @@ export default function Review() {
     }
   }
 
-  const nextLevel = Math.min(6, attempt.level + 1);
-
   return (
     <div className="page">
       <Link to="/practice" className="back-link">‹ Back to Practice</Link>
@@ -80,7 +79,7 @@ export default function Review() {
           <span className="score-card__value">{score.percent}%</span>
           <span className="score-card__detail">{score.correct} of {score.total} blanks correct</span>
           {almost > 0 && <span className="score-card__sub">{almost} almost right (half a point each)</span>}
-          <span className="score-card__sub">Level {attempt.level}</span>
+          <span className="score-card__sub">{LEVEL_NAMES[attempt.level] ?? `Level ${attempt.level}`}</span>
         </section>
 
         <ErrorSummary counts={counts} />
@@ -91,9 +90,7 @@ export default function Review() {
             <button type="button" className="btn btn--outline btn--block" aria-expanded={showScript} onClick={() => setShowScript(!showScript)}>
               Full script (English + Korean)
             </button>
-            {attempt.level < 6 && (
-              <Link to={`/practice?level=${nextLevel}`} className="btn btn--outline btn--block">Try again at Level {nextLevel}</Link>
-            )}
+            <Link to="/practice" className="btn btn--outline btn--block">Practice again</Link>
           </div>
         </section>
       </div>

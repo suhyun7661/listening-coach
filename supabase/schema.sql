@@ -45,8 +45,9 @@ create table if not exists public.attempts (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null default auth.uid() references auth.users(id) on delete cascade,
   clip_id       text not null,                        -- e.g. walk-with-me (the clip lives in the app code)
-  level         int  not null check (level between 1 and 6),
-  points        numeric(6, 1) not null,
+  level         int  not null check (level between 1 and 6),   -- 1 Easy, 2 Intermediate, 3 Hard
+  replays       jsonb not null default '{}',                    -- replays used per sentence, e.g. {"s1": 1}
+  points       numeric(6, 1) not null,
   total_blanks  int  not null,
   percent       int  not null check (percent between 0 and 100),
   created_at    timestamptz not null default now()

@@ -26,6 +26,11 @@ export function Icon({ name }) {
     pencil: <path d="M4 20l1-4L17 4l3 3L8 19l-4 1zM14 7l3 3" />,
     trophy: <path d="M8 4h8v6a4 4 0 0 1-8 0V4zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 14v4M8 21h8" />,
     timer: <path d="M12 8v5l3 2M9 2h6M12 5a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" />,
+    check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+    lock: <path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" />,
+    leaf: <path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14M5 19c2-4 5-7 9-9" />,
+    bars: <path d="M6 20V13M12 20V8M18 20V4" />,
+    diamond: <path d="M6 4h12l3 5-9 11L3 9l3-5zM3 9h18" />,
   };
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

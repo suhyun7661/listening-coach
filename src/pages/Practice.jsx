@@ -1,189 +1,50 @@
-import { useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { PlayIcon, Icon } from '../components/Common';
-import VideoPlayer from '../components/VideoPlayer';
-import HintedBlank from '../components/HintedBlank';
+import { useState } from 'react';
 import { getClips } from '../lib/clipStore';
-import { describeHints, getLevelRule } from '../lib/blanks';
 import { saveAttempt } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
-import { buildResults } from '../lib/errorTags';
-import { AUTO_ADVANCE_DELAY, useDictation } from '../lib/useDictation';
-import { formatTime, usePracticePlayer } from '../lib/usePracticePlayer';
+import WatchStep from './practice/WatchStep';
+import LevelStep from './practice/LevelStep';
+import DictationStep from './practice/DictationStep';
+import ResultsStep from './practice/ResultsStep';
 
-const LEVELS = [1, 2, 3, 4, 5, 6];
+const AUDIO_SRC = '/audio/walk-with-me.mp3';
 
+// Practice mode: Watch -> Level -> Dictation (audio only) -> Results.
+// Nothing is remembered between visits: you watch and pick a level every time.
 export default function Practice() {
   const clip = getClips()[0]; // the app has one clip: Walk With Me
-  return <PracticeClip key={clip.id} clip={clip} />;
-}
-
-function PracticeClip({ clip }) {
-  const [search] = useSearchParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [saving, setSaving] = useState(false);
-  const fromUrl = Number(search.get('level'));
-  const [level, setLevel] = useState(fromUrl >= 1 && fromUrl <= 6 ? fromUrl : clip.difficulty);
-  const rule = getLevelRule(level);
+  const [step, setStep] = useState('watch');
+  const [watched, setWatched] = useState(false);
+  const [level, setLevel] = useState(1);
+  const [round, setRound] = useState(0);
+  const [results, setResults] = useState([]);
+  const [saved, setSaved] = useState({});
 
-  const dictation = useDictation(clip.sentences, level);
-  const { current, tokensBySentence, currentAnswers, finished, inputRefs } = dictation;
-  const sentence = clip.sentences[current];
-
-  // The player reads the sentence on screen from this ref.
-  const sentenceRef = useRef(sentence);
-  sentenceRef.current = sentence;
-  const player = usePracticePlayer(sentenceRef);
-
-  const total = player.duration || 1;
-  const pct = (t) => `${Math.min(100, (t / total) * 100)}%`;
-  // Grade everything, remember it for the Review page, and go there.
-  async function submit() {
-    if (saving) return;
-    setSaving(true);
-    const results = buildResults(clip.sentences, tokensBySentence, dictation.answers);
-    const saved = await saveAttempt(user, { clipId: clip.id, title: clip.title, level, results });
-    navigate(`/review/${saved.id}`, { state: { notSaved: Boolean(saved.failed) } });
+  async function finish({ results: done, replays }) {
+    setResults(done);
+    setSaved({});
+    setStep('results');
+    const result = await saveAttempt(user, { clipId: clip.id, title: clip.title, level, results: done, replays });
+    setSaved({
+      id: result.id,
+      error: result.failed ? 'We could not save this report to your account, so it is only saved in this browser for now.' : '',
+    });
   }
 
-  const isLast = current === clip.sentences.length - 1;
-
-  let blankCounter = -1;
-  inputRefs.current = [];
-
-  return (
-    <div className="page">
-      <Link to="/" className="back-link">‹ Back to home</Link>
-      <div className="practice-head">
-        <h1 className="page__title">{clip.title}</h1>
-        <div className="practice-head__pills">
-          <span className="pill pill--accent">{clip.accent} accent</span>
-          <label className="level-pick">
-            <span>Level</span>
-            <select value={level} onChange={(e) => { setLevel(Number(e.target.value)); e.target.blur(); }}>
-              {LEVELS.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
-          </label>
-          <span className="pill pill--outline">Practice mode</span>
-        </div>
-      </div>
-
-      <div className="practice-layout">
-        <div className="practice-main">
-          <section className="player card" aria-label="Video player">
-            <div className="player__video">
-              <VideoPlayer clip={clip} handlers={player.handlers} />
-              {!player.playing && (
-                <button type="button" className="player__play" aria-label="Play video" onClick={() => { player.togglePlay(); dictation.focusBlank(); }} disabled={!player.ready}>
-                  <PlayIcon size={34} />
-                </button>
-              )}
-            </div>
-            <div className="player__bar">
-              <span>{formatTime(player.time)}</span>
-              <div className="progress progress--player" role="progressbar" aria-label="Video position" aria-valuemin="0" aria-valuemax={Math.round(total)} aria-valuenow={Math.round(player.time)}>
-                <span className="progress__done" style={{ width: pct(player.time) }} />
-                <span className="progress__sentence" style={{ left: pct(sentence.start), width: pct(sentence.end - sentence.start) }} />
-              </div>
-              <span>{formatTime(player.duration)}</span>
-            </div>
-            <div className="player__controls">
-              {player.playing && (
-                <button type="button" className="btn btn--outline" onClick={() => { player.togglePlay(); dictation.focusBlank(); }}>Pause</button>
-              )}
-              <button type="button" className="btn btn--secondary" onClick={() => { player.replay(); dictation.focusBlank(); }} disabled={!player.ready}>
-                <Icon name="replay" /> Replay sentence
-              </button>
-              <button type="button" className={`btn btn--outline${player.loop ? ' is-on' : ''}`} aria-pressed={player.loop} onClick={() => { player.toggleLoop(); dictation.focusBlank(); }} disabled={!player.ready}>
-                <Icon name="loop" /> Loop sentence
-              </button>
-            </div>
-          </section>
-
-          <section className="card sentence-card" aria-label="Dictation">
-            <div className="sentence-card__head">
-              <h2>{finished ? 'All sentences filled in' : `Sentence ${current + 1} of ${clip.sentences.length}`}</h2>
-              <span className="muted">Level {level} hints: {describeHints(level)}</span>
-            </div>
-
-            {finished ? (
-              <p className="sentence-card__done">Check any sentence with the numbers on the right, or submit now to see your results.</p>
-            ) : (
-              <p className="sentence">
-                {tokensBySentence[current].map((token) => {
-                  if (token.type === 'text') return <span key={token.index}>{token.raw}</span>;
-                  blankCounter += 1;
-                  const n = blankCounter;
-                  return (
-                    <span key={token.index} className="sentence__word">
-                      {token.before}
-                      <HintedBlank
-                        ref={(el) => { inputRefs.current[n] = el; }}
-                        blank={token}
-                        value={currentAnswers[n] ?? ''}
-                        onChange={(v) => dictation.updateAnswer(n, v)}
-                        onKeyDown={(e) => dictation.handleKeyDown(e, n)}
-                        label={`Blank ${n + 1} of ${currentAnswers.length}`}
-                      />
-                      {token.after}
-                    </span>
-                  );
-                })}
-              </p>
-            )}
-
-            <div className="countdown" aria-live="polite">
-              {dictation.pending && !finished && (
-                <>
-                  <span className="countdown__bar" key={dictation.countdownKey} style={{ animationDuration: `${AUTO_ADVANCE_DELAY}ms` }} />
-                  <span className="countdown__text">
-                    {isLast ? 'Last sentence done. Press Enter to finish.' : 'Next sentence coming up. Keep typing to stay, or press Enter to go now.'}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <div className="sentence-card__foot">
-              <button type="button" className="btn btn--outline" disabled={current === 0 && !finished} onClick={() => dictation.goTo(finished ? current : current - 1)}>Previous</button>
-              <button type="button" className="btn btn--primary" disabled={finished} onClick={dictation.advance}>
-                {isLast ? 'Finish' : 'Next sentence'}
-              </button>
-            </div>
-          </section>
-        </div>
-
-        <aside className="practice-side">
-          <section className="card" aria-labelledby="tracker-h">
-            <h2 id="tracker-h" className="side-title">Sentences</h2>
-            <ol className="tracker">
-              {clip.sentences.map((s, i) => {
-                const state = i === current && !finished ? 'current' : dictation.sentenceDone(i) ? 'done' : 'todo';
-                return (
-                  <li key={s.id}>
-                    <button type="button" className={`tracker__btn is-${state}`} aria-current={state === 'current' ? 'step' : undefined} aria-label={`Sentence ${i + 1}`} onClick={() => dictation.goTo(i)}>{i + 1}</button>
-                  </li>
-                );
-              })}
-            </ol>
-            <p className="legend">
-              <span><i className="legend__box legend__box--done" /> Done</span>
-              <span><i className="legend__box legend__box--current" /> Current</span>
-              <span><i className="legend__box" /> Not yet</span>
-            </p>
-          </section>
-
-          {rule.sceneSummary && (
-            <section className="summary-card">
-              <h2 className="summary-card__title">Scene summary</h2>
-              <p lang="ko" className="summary-card__ko">{clip.contextKo}</p>
-              <p className="summary-card__note">Korean translation of each line appears after grading.</p>
-            </section>
-          )}
-
-          <button type="button" className="btn btn--submit" onClick={submit} disabled={saving}>{saving ? 'Saving…' : 'Submit clip for grading'}</button>
-        </aside>
-      </div>
-    </div>
-  );
+  if (step === 'level') {
+    return (
+      <LevelStep
+        onBack={() => setStep('watch')}
+        onPick={(id) => { setLevel(id); setRound((r) => r + 1); setStep('dictation'); }}
+      />
+    );
+  }
+  if (step === 'dictation') {
+    return <DictationStep key={round} clip={clip} level={level} audioSrc={AUDIO_SRC} onFinish={finish} onExit={() => setStep('level')} />;
+  }
+  if (step === 'results') {
+    return <ResultsStep results={results} saved={saved} onAgain={() => setStep('level')} />;
+  }
+  return <WatchStep clip={clip} watched={watched} onWatched={() => setWatched(true)} onContinue={() => setStep('level')} />;
 }
