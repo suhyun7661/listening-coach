@@ -21,13 +21,14 @@ export default function ErrorSummary({ counts, pending = 0, title = 'Why you mis
         ))}
       </ul>
       <p className="bars__main">
-        {pending > 0 ? (
-          <>Not final yet: {pending} {pending === 1 ? 'sentence is' : 'sentences are'} not confirmed. Only confirmed categories are counted.</>
-        ) : mainCategory ? (
-          <>Main weakness {scope}: <strong>{mainCategory.label}</strong> <span lang="ko">{mainCategory.ko}</span></>
+        {mainCategory ? (
+          <>Main weakness {scope}{pending > 0 ? ' (so far)' : ''}: <strong>{mainCategory.label}</strong> <span lang="ko">{mainCategory.ko}</span></>
+        ) : pending > 0 ? (
+          'No confirmed categories yet.'
         ) : (
           `No missed words ${scope}.`
         )}
+        {pending > 0 && <><br />{pending} {pending === 1 ? 'sentence is' : 'sentences are'} not confirmed and not counted here.</>}
       </p>
     </section>
   );

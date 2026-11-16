@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ErrorSummary from '../components/ErrorSummary';
 import { computeScore, summarizeTags, wrongSentences } from '../lib/errorTags';
 import { CATEGORIES } from '../lib/diagnosis';
 import { categoryStats, extremes, MAPPING_NOTE } from '../lib/questionCategory';
@@ -12,7 +13,8 @@ const pct = (s) => (s.accuracy === null ? 'No questions' : `${s.accuracy}%`);
 
 // The Diagnosis Report: how the learner did on each skill in THIS practice level.
 // The question category comes from the question itself (see questionCategory.js), never from the mistake labels
-// the learner chose. It opens only after every mistaken sentence has a confirmed category.
+// the learner chose. It always opens. Mistake counts and the Main Weakness use ONLY categories the learner
+// confirmed; unconfirmed mistakes are listed separately under an "Incomplete Diagnosis" notice.
 export default function DiagnosisReport() {
   const { attemptId } = useParams();
   const auth = useAuth();
@@ -30,7 +32,8 @@ export default function DiagnosisReport() {
   const wrong = useMemo(() => wrongSentences(results), [results]);
   const stats = useMemo(() => categoryStats(results), [results]);
   const { strongest, weakest } = useMemo(() => extremes(stats), [stats]);
-  const pending = useMemo(() => summarizeTags(results, attempt?.userTags ?? {}).pending, [results, attempt]);
+  const { counts, pending } = useMemo(() => summarizeTags(results, attempt?.userTags ?? {}), [results, attempt]);
+  const unconfirmed = useMemo(() => wrong.filter((r) => !attempt?.userTags?.[r.sentenceId]), [wrong, attempt]);
 
   if (attempt === undefined) return <div className="page"><p className="muted">Loading your report…</p></div>;
   if (!attempt) {
@@ -44,20 +47,6 @@ export default function DiagnosisReport() {
   }
 
   const back = `/review/${attempt.id}`;
-  if (pending > 0) {
-    return (
-      <div className="page">
-        <Link to={back} className="back-link">‹ Back to Review Report</Link>
-        <h1 className="page__title">Diagnosis Report</h1>
-        <p className="notice" role="status">
-          Incomplete: {pending} of {wrong.length} mistaken {wrong.length === 1 ? 'sentence is' : 'sentences are'} not confirmed yet.
-          Confirm a category for each one in the Review Report first.
-        </p>
-        <p><Link to={back} className="btn btn--primary">Back to Review Report</Link></p>
-      </div>
-    );
-  }
-
   const sentencesCorrect = results.length - wrong.length;
   const accuracy = score.total ? Math.round((score.correct / score.total) * 100) : 0;
   const tied = (list) => list.length > 1;
@@ -70,6 +59,13 @@ export default function DiagnosisReport() {
         <Link to={back} className="btn btn--outline">Back to Review Report</Link>
       </header>
 
+      {pending > 0 && (
+        <p className="notice" role="status">
+          <strong>Incomplete Diagnosis:</strong>&nbsp;{pending} of {wrong.length} mistaken {wrong.length === 1 ? 'sentence is' : 'sentences are'} not confirmed.
+          Only the categories you confirmed are counted in “Your confirmed mistakes”. You can confirm more in the Review Report, or leave the ones you are unsure about.
+        </p>
+      )}
+
       <section className="card" aria-labelledby="sum-h">
         <h2 id="sum-h" className="side-title">Practice summary</h2>
         <ul className="diag-summary">
@@ -80,6 +76,22 @@ export default function DiagnosisReport() {
           <li><span className="diag-summary__value">{accuracy}%</span><span className="diag-summary__label">Overall accuracy ({score.correct} / {score.total} blanks)</span></li>
         </ul>
       </section>
+
+      {wrong.length > 0 && (
+        <ErrorSummary counts={counts} pending={pending} title="Your confirmed mistakes" scope="in this round" />
+      )}
+
+      {unconfirmed.length > 0 && (
+        <section className="card" aria-labelledby="unc-h">
+          <h2 id="unc-h" className="side-title">Not confirmed ({unconfirmed.length})</h2>
+          <p className="muted">These mistakes have no confirmed category, so they are not part of the counts above.</p>
+          <ul className="spelling__list">
+            {unconfirmed.map((r) => (
+              <li key={r.sentenceId}><span className="spelling__num">#{r.number}</span><span>{r.text}</span></li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="card" aria-labelledby="cat-h">
         <h2 id="cat-h" className="side-title">Accuracy by category</h2>

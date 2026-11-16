@@ -158,7 +158,7 @@ export default function Review() {
 
   const weak = categoryById(mainWeakness(counts));
   const confirmedCount = wrong.length - pending;
-  const complete = pending === 0; // the Diagnosis Report opens only when every mistaken sentence is confirmed
+  const complete = pending === 0; // the Diagnosis Report always opens; unconfirmed mistakes only trigger the "Incomplete Diagnosis" notice
 
   return (
     <div className="page review">
@@ -166,18 +166,14 @@ export default function Review() {
       <header className="review-head">
         <h1 className="page__title">Review Report</h1>
         <div className="review-head__buttons">
-          {complete ? (
-            <Link to={`/review/${attempt.id}/diagnosis`} className="btn btn--primary">View Diagnosis Report</Link>
-          ) : (
-            <button type="button" className="btn btn--primary" disabled aria-describedby="diag-note">View Diagnosis Report</button>
-          )}
+          <Link to={`/review/${attempt.id}/diagnosis`} className="btn btn--primary">View Diagnosis Report</Link>
           <Link to={`/review/${attempt.id}/script`} className="btn btn--outline">View Full Script</Link>
         </div>
       </header>
       {!complete && (
         <p id="diag-note" className="notice" role="status">
-          Incomplete: {pending} of {wrong.length} mistaken {wrong.length === 1 ? 'sentence is' : 'sentences are'} not confirmed yet.
-          Confirm a category for each one to open the Diagnosis Report. Suggestions and “unclear” sentences are not counted as confirmed.
+          <strong>Incomplete Diagnosis:</strong>&nbsp;{pending} of {wrong.length} mistaken {wrong.length === 1 ? 'sentence is' : 'sentences are'} not confirmed yet.
+          You do not have to classify a mistake you are unsure about. Suggestions and “unclear” sentences are never counted as confirmed.
         </p>
       )}
       {tagError && <p className="form__error" role="alert">{tagError}</p>}

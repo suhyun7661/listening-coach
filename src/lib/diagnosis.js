@@ -7,6 +7,9 @@ import { levenshtein, normalize } from './textUtils';
 //   - A mistaken sentence gets ONE primary cause at most (never several).
 //   - The app only RECOMMENDS a category when the answer gives real evidence. Otherwise it says "unclear"
 //     (tag = null) and never falls back to Speed or any other category.
+//   - Speed is NOT guessed from empty or missing answers: how many boxes were left empty says nothing about
+//     delivery speed. Nothing in a typed answer reliably shows a speed problem, so for now the learner chooses
+//     Speed by hand. To add a real speed signal later, return { tag: 'SP' } from diagnoseMiss.
 //   - A recommendation is never a confirmed diagnosis: only the learner's choice (userTag) is final.
 // The wording is always cautious ("may have").
 //
@@ -68,7 +71,7 @@ const PRIORITY = ['CS', 'V', 'SP'];
 const REASONS = {
   CS: (m) => `You wrote ${quote(m.userAnswer.trim() || m.answer)} for ${quote(m.answer)}, which looks like words that were linked or reduced in fast speech.`,
   V: (m) => `${quote(m.answer)} may be a word or expression you are not familiar with yet.`,
-  SP: () => 'Several parts were left empty or missed, so you may not have been able to keep up with the speed.',
+  SP: () => 'The speed of the delivery may have kept you from processing this part.',
 };
 
 // A whole sentence -> { tag, reason, items }. tag is null when there is not enough evidence ("unclear").
@@ -80,10 +83,6 @@ export function diagnoseSentence(row) {
 
   const counts = {};
   items.forEach((i) => { if (i.tag) counts[i.tag] = (counts[i.tag] ?? 0) + 1; });
-
-  // Speed needs several parts with no usable answer in the same sentence; one empty box alone proves nothing.
-  const noEvidence = items.filter((i) => !i.tag).length;
-  if (noEvidence >= 2) counts.SP = (counts.SP ?? 0) + noEvidence;
 
   const tags = Object.keys(counts);
   if (!tags.length) return { tag: null, reason: '', items };

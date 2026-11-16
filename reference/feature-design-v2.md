@@ -45,10 +45,11 @@ Context: a university assignment. The professor opens one public URL and tests t
 
 ## 4. Review Report (updated 2026-11-17)
 - **Header:** title and a "View Full Script" button at the upper right (opens a separate Full Script page).
-- **Top:** score and the biggest weakness (from the categories the learner confirmed; unconfirmed sentences use the suggestion).
+- **Top:** score and the biggest weakness (counting only categories the learner confirmed; suggestions are never counted as confirmed). If any wrong sentence is unconfirmed, an "Incomplete Diagnosis" notice is shown.
 - **Minor Spelling Errors:** a compact box for one-letter typos ("Minor spelling mistake. The intended word was recognized correctly."). They count as correct and are never listening errors.
 - **Sentences to Review:** only sentences answered incorrectly. Each card: sentence number, Korean meaning, correct answer, the learner's answer, Suggested category, Confirmed category, and a collapsed Listening Guidance.
-- **Seven categories:** Connected Speech, Speed, Unfamiliar Expression, Vocabulary, Accent, Main Idea, Other. The suggestion comes from comparing the correct answer with the learner's actual answer (rule-based, cautious wording, Other when the evidence is not enough). The learner's choice is the final confirmed category. Both are stored separately and kept when the report is reopened.
+- **Three categories:** Connected Speech, Speed, Vocabulary. One primary cause per sentence. The recommendation comes from comparing the correct answer with the learner's actual answer (rule-based, cautious wording, with a short reason). When the evidence is not enough it shows "Unclear (not sure)": no automatic Speed or other fallback. Rules: CS = evidence of trouble with connected, reduced or changed sounds; V = evidence of misunderstanding an idiom, phrasal verb or key expression; SP = only with sufficient evidence of a delivery-speed problem (not from empty blanks; no typed answer shows this reliably yet, so the learner chooses it); Unclear = cause cannot be reliably identified. The learner picks CS, SP or V, or leaves it unconfirmed. Both are stored separately and kept when the report is reopened.
+- **Diagnosis Report** (button at the upper right; it ALWAYS opens, even when some mistakes are unconfirmed): practice level, sentence count, correct/incorrect, overall accuracy, one bar per category (correct / total / %), strongest and weakest point (ties shown, empty categories not 0%). Question categories come from a fixed rule on the word, not from the learner's labels. Below that: "Your confirmed mistakes" (counts and Main Weakness from user-confirmed categories only), a separate "Not confirmed" list, and an "Incomplete Diagnosis" notice while unconfirmed mistakes remain. Users are not forced to classify mistakes they cannot diagnose. A "Back to Review Report" button returns.
 - **Listening Guidance (collapsed by default):** "Why you may have missed it", "What to listen for", "Focus on". It always matches the category selected now and changes immediately when the learner picks another one.
 - **Full Script page:** two columns. Left: the video with normal controls (no speed option) and the current time. Right: all sentences with number and start time. The playing sentence is highlighted, clicking a sentence jumps the video there and plays, sentences answered incorrectly stay red with an "Incorrect" label (visually different from the playing highlight). A back link returns to the Review Report.
 
@@ -106,7 +107,7 @@ Left out (6): Walk with me, pull out of, You're kidding me, this close, don't ad
 
 ## 6. Stays the same
 - Login (Supabase Auth), profiles, security rules (RLS) on every table.
-- Five error categories, saved as `auto_tag` and `user_tag`.
+- Three error categories (CS, SP, V), saved as `auto_tag` and `user_tag`.
 - Dictation engine (blanks, hints, grading), design system (violet / coral / yellow / indigo / lavender), responsive layout.
 - Local only until the owner says "deploy". The goal is a public Vercel URL for the professor, at the very end.
 
