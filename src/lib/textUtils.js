@@ -3,12 +3,17 @@
 // Lowercase, unify apostrophes, drop punctuation, collapse spaces.
 export function normalize(text = '') {
   return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // Touché and Touche count as the same word
     .toLowerCase()
     .replace(/[’‘]/g, "'")
     .replace(/[^a-z0-9' ]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+// A group of blanks (one expression) keeps its boxes joined with "|"; the grader wants plain words.
+export const answerText = (value = '') => value.split('|').join(' ').replace(/\s+/g, ' ').trim();
 
 export function stripApostrophes(text = '') {
   return text.replace(/'/g, '');
@@ -20,7 +25,7 @@ export function splitTokens(text = '') {
 
 // "didn't." -> { before: '', word: "didn't", after: '.' }
 export function parseToken(token) {
-  const match = token.match(/^([^A-Za-z0-9'’]*)([A-Za-z0-9'’-]+)([^A-Za-z0-9'’]*)$/);
+  const match = token.match(/^([^\p{L}0-9'’]*)([\p{L}0-9'’-]+)([^\p{L}0-9'’]*)$/u);
   if (!match) return { before: '', word: '', after: token };
   return { before: match[1], word: match[2], after: match[3] };
 }

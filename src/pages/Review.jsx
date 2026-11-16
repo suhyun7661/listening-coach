@@ -78,7 +78,7 @@ export default function Review() {
           <span className="score-card__label">Your score</span>
           <span className="score-card__value">{score.percent}%</span>
           <span className="score-card__detail">{score.correct} of {score.total} blanks correct</span>
-          {almost > 0 && <span className="score-card__sub">{almost} almost right (half a point each)</span>}
+          {almost > 0 && <span className="score-card__sub">{almost} with a small spelling slip (still counted correct)</span>}
           <span className="score-card__sub">{LEVEL_NAMES[attempt.level] ?? `Level ${attempt.level}`}</span>
         </section>
 

@@ -4,6 +4,7 @@ import { generateBlanks, LEVEL_NAMES } from '../../lib/blanks';
 import { buildResults } from '../../lib/errorTags';
 import { gradeAnswer } from '../../lib/grading';
 import { useSegmentAudio } from '../../lib/useSegmentAudio';
+import { answerText } from '../../lib/textUtils';
 
 export const MAX_REPLAYS = 3;
 const emptyAnswers = (tokensBySentence) => tokensBySentence.map((tokens) => tokens.filter((t) => t.type === 'blank').map(() => ''));
@@ -60,7 +61,10 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
   // Enter: grade this sentence, colour its number, move on. After the last one, finish.
   function submit() {
     const blanks = tokensBySentence[index].filter((t) => t.type === 'blank');
-    const graded = blanks.map((b, n) => ({ b, typed: (answers[index][n] ?? '').trim(), ...gradeAnswer(answers[index][n] ?? '', b.answer) }));
+    const graded = blanks.map((b, n) => {
+      const typed = answerText(answers[index][n] ?? '');
+      return { b, typed, ...gradeAnswer(typed, b.answer) };
+    });
     const allRight = graded.every((g) => g.status === 'correct' || g.status === 'almost');
     const typos = graded.filter((g) => g.status === 'almost');
     setMarks((m) => [...m.slice(0, index), allRight ? 'correct' : 'wrong']);

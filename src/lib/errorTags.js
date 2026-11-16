@@ -1,5 +1,5 @@
 import { gradeAnswer, isMiss } from './grading';
-import { normalize } from './textUtils';
+import { answerText, normalize } from './textUtils';
 
 export const CATEGORIES = [
   { id: 'CS', label: 'Connected speech', ko: '연음·축약', description: 'Words were linked or reduced in natural speech.' },
@@ -43,7 +43,8 @@ export function guessTag({
   const squash = (s) => s.replace(/[ ']/g, '');
 
   if (a) {
-    if (REDUCTIONS.has(a) || a.includes(' ')) return 'CS';
+    // Two words typed where the answer is one word = a split word. (Expressions are many words by design.)
+    if (REDUCTIONS.has(a) || (a.includes(' ') && !c.includes(' '))) return 'CS';
     if (n && squash(a) === squash(c + n)) return 'CS';
     if (p && squash(a) === squash(p + c)) return 'CS';
     if (a.length >= 3 && c.length - a.length >= 2 && c.startsWith(a)) return 'CS';
@@ -61,7 +62,7 @@ export function buildResults(sentences, tokensBySentence, answers) {
 
     const graded = tokensBySentence[si].map((token) => {
       if (token.type !== 'blank') return token;
-      const userAnswer = answers[si]?.[blankNumber] ?? '';
+      const userAnswer = answerText(answers[si]?.[blankNumber] ?? '');
       blankNumber += 1;
       return { ...token, blankId: `${sentenceId}-${token.index}`, userAnswer, ...gradeAnswer(userAnswer, token.answer) };
     });

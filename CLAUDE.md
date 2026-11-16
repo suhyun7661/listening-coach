@@ -124,11 +124,11 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 
 | Level | Blanks per sentence | Hints |
 |---|---|---|
-| Easy | 1-2 | Korean meaning above each blank + first letter + letter count |
-| Intermediate | 3-4 | Korean meaning for key expressions only + letter count |
-| Hard | about half of the words | none (all blanks the same width) |
+| Easy | 1-2 (one blank per word) | Korean meaning above each blank + first letter + letter count |
+| Intermediate | every key expression = ONE group (one box per word, each as long as its word) + gonna/wanna and hand-picked `listenWords` | Korean meaning above the group; below it `3 words · 15 letters`; no first letter |
+| Hard | same groups + more single words (up to 6 blanks, longest content words, never next to another blank) | none; boxes keep their real length |
 
-- To confirm: how many blanks short sentences get (for example "Touché." has one word). Current idea: the lower number for short sentences.
+- A group (one expression) is graded and scored as ONE item, however many words it has. Easy scores word by word. Scores of different levels are not comparable (approved 2026-11-16). Inside a group, Space or Tab moves to the next word box. Hand-picked extra words live in `listenWords` in the clip data. Touché and Touche are the same.
 - Blank priority: key expressions, then small fast words, then connected-speech words, then other content words. Use a seeded random so the same sentence and level always give the same blanks.
 - Unlock: the level buttons unlock only after the full video has played to the end once. Not remembered: it starts locked on every visit, and the level is chosen every visit.
 - Audio: `public/audio/walk-with-me.mp3` (made by me from the video). Only the current sentence's part (start to end timestamp) plays, always at 1x. It plays once automatically when the sentence appears. Then "Replay" works up to 3 times; the page shows "Replays left: 3/2/1/0" and the button is disabled at 0. Replays used are saved per sentence.

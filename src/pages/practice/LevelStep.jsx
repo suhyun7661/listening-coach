@@ -2,8 +2,8 @@ import { Icon } from '../../components/Common';
 
 const LEVELS = [
   { id: 1, name: 'Easy', icon: 'leaf', blanks: '1–2 blanks per sentence', hints: 'Hints: Korean meaning, first letter + letter count' },
-  { id: 2, name: 'Intermediate', icon: 'bars', blanks: '3–4 blanks per sentence', hints: 'Hints: Korean meaning (for key expressions only), letter count' },
-  { id: 3, name: 'Hard', icon: 'diamond', blanks: 'About half of the words', hints: 'No hints' },
+  { id: 2, name: 'Intermediate', icon: 'bars', blanks: 'Key expressions and hard-to-catch words', hints: 'Hints: Korean meaning of the expression, word and letter count' },
+  { id: 3, name: 'Hard', icon: 'diamond', blanks: 'Expressions plus more words (up to 6)', hints: 'No hints' },
 ];
 
 // Step 2: pick a level. The choice is not remembered: you pick again every visit.

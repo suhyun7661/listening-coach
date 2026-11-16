@@ -56,6 +56,7 @@ const clip = {
       text: "Then let's cut to the chase. Is he bluffing, or is he actually walking?",
       ko: '그럼 본론만 얘기하자. 허세야, 아니면 진짜 떠나는 거야?',
       keyWords: [{ word: 'cut to the chase', ko: '본론으로 들어가다', note: 'get to the main point' }],
+      listenWords: ['bluffing'], // extra single words worth a blank in Intermediate and Hard
       glosses: { 'then': '그럼', "let's": '~하자', 'cut': '자르다', 'to': '~로', 'the': '그', 'chase': '추격', 'is': '~이다', 'he': '그는', 'bluffing': '허세 부리는', 'or': '아니면', 'actually': '사실은', 'walking': '떠나는' },
     },
     {
@@ -108,6 +109,7 @@ const clip = {
       text: 'Then we play hardball. Their offer expires Friday.',
       ko: '그럼 세게 나가야죠. 상대 측 제안이 금요일에 만료되거든요.',
       keyWords: [{ word: 'play hardball', ko: '강경하게 나가다', note: 'act tough to get what you want' }],
+      listenWords: ['expires'],
       glosses: { 'then': '그러면', 'we': '우리는', 'play': '하다', 'hardball': '강경책', 'their': '그들의', 'offer': '제안', 'expires': '만료된다', 'friday': '금요일' },
     },
     {
@@ -132,6 +134,7 @@ const clip = {
       text: "I know you do. That's why it's yours. Ten o'clock. Don't be late.",
       ko: '알지. 그래서 네게 맡기는 거야. 10시야. 늦지 마.',
       keyWords: [],
+      listenWords: ['yours', "o'clock"],
       glosses: { 'i': '나는', 'know': '안다', 'you': '당신은', 'do': '그렇다', "that's": '그것이 ~이다', 'why': '이유', "it's": '그것은 ~이다', 'yours': '네 것', 'ten': '10', "o'clock": '~시', "don't": '~하지 마', 'be': '~이다', 'late': '늦은' },
     },
     {
