@@ -223,6 +223,23 @@ export default function Review() {
           <ReviewCard key={row.sentenceId} row={row} confirmed={userTags[row.sentenceId]} onConfirm={confirm} />
         ))}
       </div>
+
+      {wrong.length > 0 && (
+        <section className="next-step" aria-labelledby="next-h">
+          <h2 id="next-h" className="side-title">{complete ? 'All mistakes are confirmed' : 'Almost there'}</h2>
+          <p>
+            {complete
+              ? 'Go back to the top of this page to see your Diagnosis Report: a short chart of how you did in each category.'
+              : `Confirm the remaining ${pending} ${pending === 1 ? 'sentence' : 'sentences'} above, then go to the top to see your Diagnosis Report. You can also open it now.`}
+          </p>
+          <div className="review-head__buttons">
+            <button type="button" className="btn btn--outline" onClick={() => window.scrollTo(0, 0)}>
+              ↑ Back to the top
+            </button>
+            <Link to={`/review/${attempt.id}/diagnosis`} className="btn btn--primary">View Diagnosis Report</Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

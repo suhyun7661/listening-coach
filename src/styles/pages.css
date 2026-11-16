@@ -345,3 +345,6 @@
 .diag-bar__note { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
 .diag-points { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .transcript__line:disabled { cursor: default; opacity: 0.6; }
+
+.next-step { margin-top: 28px; padding: 22px 24px; border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface); display: flex; flex-direction: column; gap: 12px; }
+.next-step p { margin: 0; }
