@@ -49,12 +49,36 @@ Context: a university assignment. The professor opens one public URL and tests t
 - **Five categories:** Speed (SP), New Word (V), Connected Speech (CS), Accent (AC), Main Idea (MI). Each mistake gets an automatic guess. The learner can change it. The final category is the learner's choice. The guess is a first diagnosis, not a final judgment.
 - **"Watch the full video" button:** opens the full video with normal player controls (the playback speed option is hidden) and an optional subtitles toggle: English / Korean / Off.
 
-## 5. Compete Mode (a quiz, not a race)
+## 5. Compete Mode (a vocabulary game, not a race)
+Updated 2026-11-17 (owner decisions; replaces the old "15 meaning-choice questions" plan). Goal: feel like a competitive vocabulary game while still teaching. It tests three abilities: listening recognition, meaning comprehension, and contextual expression recall.
+
+**Flow:** Study page -> Quiz (15 questions, feedback after each) -> Results and leaderboard.
+
 - **Study page:** the 15 quiz expressions with meanings and example usage.
-- **Quiz:** a fixed set of 15 questions, in the same order for everyone. Each question: pick the correct meaning (Korean choices; the wrong choices are meanings of other expressions).
-- **Leaderboard:** scores saved in Supabase. Only each user's FIRST attempt counts. Ties go to the faster time. It is not real-time: it loads the saved scores.
+- **Quiz: 15 questions, three types, 5 of each.** The questions are mixed (not grouped by type). The mixed order is chosen once and stored in the data file. Every learner gets the same questions in the same order, and retries use the same order too, so results are fair against the fixed competitors (owner decision 2026-11-17).
+  1. **Listen and Type (5):** the learner hears the real clip audio and sees ONLY the Korean meaning. No English sentence and no blanks are shown. The learner types the English expression. The audio plays once by itself, then up to 2 replays.
+  2. **Meaning Match (5):** the learner sees the English expression and picks the Korean meaning from 4 choices (wrong choices are meanings of other quiz expressions).
+  3. **Fill in the Gap (5):** a NEW English sentence (never taken from the clips) with a gap. The Korean meaning is always shown below the sentence; it clarifies the intended expression without giving the English answer. The learner TYPES the expression (no multiple choice). This tests whether the learner can use the expression in an unfamiliar situation.
+- **Typed answers:** ignore case, punctuation and extra spaces; a one-letter typo on a long answer counts as correct; accepted verb forms are listed per question (for example "dropped the ball" and "drop the ball"). Touche = Touché. Each question has a short list of accepted answers in the data file.
+- **Immediate feedback after every question:** shows Correct or Incorrect, reveals the correct English expression, and (if incorrect) also shows its Korean meaning. The learner reads it and presses Next. Once submitted, an answer cannot be changed.
+- **Results:** score such as 12 / 15 and the accuracy percentage (1 point per question; the same scoring and the same questions for everyone).
+- **Short motivational message on the results page** (based on real data: the learner's score, the 5 benchmark scores and, if there is one, the previous saved result, which is read BEFORE it is overwritten). Examples: "You improved your score!" (shown ONLY when a previous saved result exists and the new score is higher; never on the first attempt, never when the score is the same or lower), "You're just 1 point behind Sophie!", "You beat 3 of 5 competitors", "Perfect score!". "Personal best" messages are not possible because no history is kept.
+- **Leaderboard:** the learner is compared with **5 predefined fictional competitors** (6 participants in total). The leaderboard shows rank 1st to 6th, names and scores, and highlights the learner's row, which is labeled "Latest Result" (only the most recent score is stored). Tied scores share a rank (for example 1st, 2nd, 2nd, 4th). There is no time tie-break. Competitors are never generated or randomized; their scores are the same for every session and every user. They are only a motivating benchmark, not real users.
+- **Server storage (Supabase):**
+  - `quiz_benchmarks`: the 5 fictional competitors (name, score out of 15, order). Read-only for signed-in learners; only changed by SQL.
+  - `quiz_results`: ONE row per learner holding only the latest completed quiz (score, total, percent, answers, date). A new completed quiz overwrites it. No attempt history and no personal-best record (decided 2026-11-17: the app is for a limited number of demonstrations, not long-term tracking). Row Level Security: a learner sees and writes only their own row.
+  - Unlimited retries. After each completed quiz the learner's score is compared with the same 5 fixed competitors and the leaderboard is shown.
 - Practice (listening) scores and quiz scores are kept separate.
 - After Practice, the site encourages the learner to try Compete.
+
+### The fictional competitors (approved by the owner 2026-11-17; scores are fixed and stored permanently in Supabase)
+| Name | Score |
+|---|---|
+| Minjun K. | 14 / 15 |
+| Sophie L. | 12 / 15 |
+| Daniel P. | 11 / 15 |
+| Hana S. | 11 / 15 |
+| Tomas R. | 8 / 15 |
 
 ### The 15 expressions (proposed; kept "Touché" at the owner's request)
 | # | Expression | Korean meaning |

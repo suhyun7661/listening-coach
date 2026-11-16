@@ -2,11 +2,11 @@
 
 ## What this is
 Listening Coach is an English listening practice website for Korean learners who are comfortable with academic English and reading, but struggle with fast, natural native speech and unfamiliar conversational expressions (for example "on a whim"). Complete beginners are not the target.
-- FINAL DESIGN (v2, decided 2026-11-16, two rounds; full text in reference/feature-design-v2.md, it replaces the old plan wherever they differ): ONE video (Walk With Me); the main screen has only two choices, Practice Mode and Compete Mode. Practice = watch the video, then audio-only dictation at 3 levels (Easy / Intermediate / Hard), then a Review Report with five error categories the learner can change. Compete = a study page, then a fixed 15-question expression quiz, then a saved (not real-time) leaderboard.
+- FINAL DESIGN (v2, decided 2026-11-16, two rounds; full text in reference/feature-design-v2.md, it replaces the old plan wherever they differ): ONE video (Walk With Me); the main screen has only two choices, Practice Mode and Compete Mode. Practice = watch the video, then audio-only dictation at 3 levels (Easy / Intermediate / Hard), then a Review Report with five error categories the learner can change. Compete = a study page, then a 15-question expression quiz (Listen and Type, Meaning Match, Fill in the Gap; 5 of each, mixed) with feedback after each question, then results and a leaderboard against 5 fixed fictional competitors (updated 2026-11-17).
 - Context: this is a university assignment. The professor opens one public URL and tests the site alone. Simple and reliable beats clever.
 - The Review Report is the ONLY way to review mistakes. There is no Notebook, no review schedule, no History and no Progress.
 - Already built and kept: dictation engine (blanks, hints, grading), five error categories (autoTag + userTag), attempts saved in Supabase (they feed the Review Report), Login/Account.
-- REMOVED in v2 (approved by me on 2026-11-16, no separate approval needed): speed control; US/UK accents, Compare accents, Google Cloud TTS and the accent MP3 files; real-time competition (rooms, live leaderboard, Supabase Realtime); the 5 sample clips and their backup; the Part 1 / Part 2 idea; History, Progress, Notebook and its 1/3/7-day schedule (pages, menus and code); the notebook-based Vocab quiz page and its "listen and type" question type.
+- REMOVED in v2 (approved by me on 2026-11-16, no separate approval needed): speed control; US/UK accents, Compare accents, Google Cloud TTS and the accent MP3 files; real-time competition (rooms, live leaderboard, Supabase Realtime); the 5 sample clips and their backup; the Part 1 / Part 2 idea; History, Progress, Notebook and its 1/3/7-day schedule (pages, menus and code); the old notebook-based Vocab quiz page. (The new Compete quiz is separate and has its own "listen and type" question type, decided 2026-11-17.)
 - Admin page REMOVED (decided 2026-11-16): the clip data lives in one code file, `src/data/clips/walk-with-me.js`. No `clips` / `sentences` tables, no admin rule, no video upload.
 
 ## About the person building this
@@ -65,7 +65,7 @@ The site must work on laptops and phones (responsive).
 - Helper commands: none any more (`npm run dev`, `npm run build`, `npm run preview` only).
 - Secret settings live in the `.env` file (git-ignored; `.env.example` is the template). Names only: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (the public key, safe in the browser). `GOOGLE_TTS_API_KEY`, `TTS_VOICE_US` and `TTS_VOICE_UK` are OLD and will be removed with the TTS feature.
 - Database setup in the Supabase SQL Editor: if the project is OLD, run `supabase/cleanup-v2.sql` once first; then run `supabase/schema.sql` (profiles, attempts, blank_results with security rules; safe to run again).
-- Tables: profiles, attempts, blank_results (auto_tag + user_tag). Later stages add a quiz-scores table and a replays column. Row Level Security is on for every table.
+- Tables: profiles, attempts, blank_results (auto_tag + user_tag). Stage 20 adds `quiz_benchmarks` (5 fictional competitors, read-only) and `quiz_results` (my latest quiz result, one row per learner). Row Level Security is on for every table.
 - Storage folders `audio` and `videos` in Supabase are no longer used (delete them by hand in Supabase > Storage if you like). The video and the audio are plain files in `public/`.
 - How data flows: the clip (sentences, timings, Korean, key expressions) is in `src/data/clips/walk-with-me.js`; the video is `public/videos/walk-with-me.mp4`. Attempts and reports are saved to my account when signed in, and only in this browser (localStorage) when signed out. Compete needs sign-in (Stage 20).
 - There is no Admin page any more.
@@ -91,7 +91,7 @@ Accessibility: visible keyboard focus, real buttons and labels, respect reduced 
 1. Home: only two big choices, Practice Mode and Compete Mode.
 2. Practice: (a) Watch the full video; the level buttons unlock after it has played to the end once (every visit). (b) Choose Easy / Intermediate / Hard. (c) Audio-only dictation: sentence numbers on the left (blue = all blanks correct, red = any blank wrong), the sentence plays once by itself, "Replay" up to 3 times ("Replays left: 3/2/1/0"), Enter moves to the next blank and, on the last blank, submits the sentence. (d) Results: "32 / 40 correct" and a button to the Review Report.
 3. Review Report (the only mistake review): top = biggest weakness (from the learner-confirmed categories). Each incorrect sentence: correct sentence on the left, the learner's answer on the right, category chips (auto guess marked "suggested", one tap to change). "Watch the full video" button: normal player controls without the speed option, and a subtitles toggle (English / Korean / Off). No "Save to notebook".
-4. Compete: Study page (the 15 key expressions with meanings and example usage), then a fixed 15-question quiz (same order for everyone, meaning choice in Korean), then the leaderboard (first attempt only, ties go to the faster time, loaded from saved scores).
+4. Compete: Study page (the 15 key expressions with meanings and example usage), then a 15-question quiz (5 Listen and Type, 5 Meaning Match, 5 Fill in the Gap, mixed, same order for everyone), immediate feedback after each answer (correct/incorrect, the English expression, the Korean meaning if wrong; no changing answers), then Results (12 / 15, percent) and a leaderboard of 6: me (labeled "Latest Result") plus 5 fixed fictional competitors stored in Supabase, ranks 1st-6th, ties share a rank, my row highlighted.
 5. Login and Account.
 Header menu in v2: logo, Practice, Compete, account. No Library, Vocab quiz, Notebook, History or Progress.
 
@@ -154,8 +154,8 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 /reference/listening-coach-update contains working code for blanks, grading, error tags, SentenceDictation, ReviewPanel and styles. Reuse it instead of rewriting.
 
 ## Other features
-- Compete Mode (quiz): study page, then a fixed set of 15 questions in the same order for everyone. Question type: pick the correct meaning (Korean choices; wrong choices come from the other expressions). The 15 expressions: got a sec; get cold feet; cut to the chase; on the fence; I can work with; jump on it; back out; leave money on the table; buy it; play hardball; a long shot; drop the ball; I've got this; Says the guy who's...; Touché. (Not in the quiz: Walk with me, pull out of, You're kidding me, this close, don't add up, one step ahead.) The final list is in reference/feature-design-v2.md.
-- Scores are saved in Supabase. Leaderboard: only each user's FIRST attempt counts; ties go to the faster time. Not real-time: it loads saved scores. Practice (listening) scores and quiz scores are kept separate. After Practice, the site encourages the learner to try Compete.
+- Compete Mode (quiz): study page, then 15 mixed questions in the same order for everyone: 5 Listen and Type (hear the clip audio, see only the Korean meaning, type the English expression), 5 Meaning Match (pick the Korean meaning, 4 choices), 5 Fill in the Gap (a NEW sentence not from the clips, Korean meaning always shown below, type the expression). Typed answers: ignore case/punctuation, one-letter typo OK, accepted verb forms listed per question. Questions live in `src/data/compete-quiz.js`. The 15 expressions: got a sec; get cold feet; cut to the chase; on the fence; I can work with; jump on it; back out; leave money on the table; buy it; play hardball; a long shot; drop the ball; I've got this; Says the guy who's...; Touché. (Not in the quiz: Walk with me, pull out of, You're kidding me, this close, don't add up, one step ahead.) The final list is in reference/feature-design-v2.md.
+- Quiz retries are unlimited, but only the learner's LATEST completed quiz is saved in Supabase (`quiz_results`, one row per learner, overwritten each time; no history, no personal best; decided 2026-11-17). The retry uses the same fixed question order. The results page shows a short motivational message from real data (for example "You improved your score!", shown only when a previous result exists and the new score is higher, never on the first attempt; or "You're just 1 point behind Sophie!"). The leaderboard compares the learner with 5 predefined fictional competitors (`quiz_benchmarks`, fixed scores, never random); 6 participants; tied scores share a rank; no time tie-break. Not real-time. Practice (listening) scores and quiz scores are kept separate. After Practice, the site encourages the learner to try Compete.
 - Removed in v2: Compare accents, speed control, room codes, live leaderboard, Notebook, review schedule, Vocab quiz page, History, Progress.
 
 ## Rules that must not be broken
@@ -163,14 +163,14 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 - Never copy official Korean subtitles; translations are our own.
 - The app never handles money.
 - Never put secret keys in frontend code or commit them; use .env files listed in .gitignore. Ask me to paste keys into .env myself.
-- Supabase: Row Level Security on every table; users only see their own data (quiz scores are visible to all signed-in users, for the leaderboard).
+- Supabase: Row Level Security on every table; users only see their own data (the 5 fictional competitors are read-only and readable by signed-in users).
 
 ## Build stages
 Done: old stages 1-6, 8-15 and v2 Stage 17. Stage 7 (deploy) on hold. The v2 stages 18-22 are decided but NOT started; do them one at a time and wait for my OK.
 17. DONE. Clean-up and removals (one clip from `public/`, no sample clips, no speed / accents / TTS, no History / Progress / Notebook / Vocab quiz, no rooms / Realtime, no Admin; database cleanup in `supabase/cleanup-v2.sql`).
 18. DONE. Practice: Watch step, level unlock, 3 levels, audio-only dictation from my mp3, replays, Enter to submit, blue/red sentence numbers, results, save to Supabase (replays per sentence; needs `supabase/stage-18.sql`).
 19. Review Report: correct sentence left / learner answer right, five categories with manual change, weakness at the top, "Watch the full video" with subtitles toggle.
-20. Compete quiz: study page, fixed 15 questions, saved first-attempt leaderboard, new quiz-scores table.
+20. Compete quiz: study page, 15 mixed questions (3 types), feedback after each, results, leaderboard vs 5 fixed fictional competitors, new `quiz_benchmarks` and `quiz_results` tables, motivational result message.
 21. Home with two choices and a simple menu; "try Compete" after Practice.
 22. Deploy to a public URL (only when I say so), then the professor's test.
 
