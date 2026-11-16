@@ -5,7 +5,7 @@ Listening Coach is an English listening practice website for Korean learners who
 - FINAL DESIGN (v2, decided 2026-11-16, two rounds; full text in reference/feature-design-v2.md, it replaces the old plan wherever they differ): ONE video (Walk With Me); the main screen has only two choices, Practice Mode and Compete Mode. Practice = watch the video, then audio-only dictation at 3 levels (Easy / Intermediate / Hard), then a Review Report with five error categories the learner can change. Compete = a study page, then a 15-question expression quiz (Listen and Type, Meaning Match, Fill in the Gap; 5 of each, mixed) with feedback after each question, then results and a leaderboard against 5 fixed fictional competitors (updated 2026-11-17).
 - Context: this is a university assignment. The professor opens one public URL and tests the site alone. Simple and reliable beats clever.
 - The Review Report is the ONLY way to review mistakes. There is no Notebook, no review schedule, no History and no Progress.
-- Already built and kept: dictation engine (blanks, hints, grading), five error categories (autoTag + userTag), attempts saved in Supabase (they feed the Review Report), Login/Account.
+- Already built and kept: dictation engine (blanks, hints, grading), seven mistake categories (autoTag + userTag), attempts saved in Supabase (they feed the Review Report), Login/Account.
 - REMOVED in v2 (approved by me on 2026-11-16, no separate approval needed): speed control; US/UK accents, Compare accents, Google Cloud TTS and the accent MP3 files; real-time competition (rooms, live leaderboard, Supabase Realtime); the 5 sample clips and their backup; the Part 1 / Part 2 idea; History, Progress, Notebook and its 1/3/7-day schedule (pages, menus and code); the old notebook-based Vocab quiz page. (The new Compete quiz is separate and has its own "listen and type" question type, decided 2026-11-17.)
 - Admin page REMOVED (decided 2026-11-16): the clip data lives in one code file, `src/data/clips/walk-with-me.js`. No `clips` / `sentences` tables, no admin rule, no video upload.
 
@@ -43,7 +43,7 @@ Listening Coach is an English listening practice website for Korean learners who
 ## Product direction (v2, decided 2026-11-16; replaces everything earlier)
 - Target user: intermediate/advanced Korean learners, strong in academic vocabulary and reading, weak in fast casual conversation and natural expressions. Complete beginners are NOT the target.
 - Main loop: (1) Watch the full video -> (2) audio-only dictation, 3 levels -> (3) Review Report with five categories (the learner can change them). Compete Mode is an expression quiz that reinforces what was heard.
-- Error categories stay CS, SP, V, AC, MI (shown as Connected Speech, Speed, New Word, Accent, Main Idea). Auto-guessed as a first diagnosis; the learner's choice is final (store autoTag and userTag).
+- Mistake categories (updated 2026-11-17, seven): CS Connected Speech, SP Speed, UE Unfamiliar Expression, V Vocabulary, AC Accent, MI Main Idea, OT Other. The app only SUGGESTS one per mistaken sentence (autoTag, from the learner's actual answer); the learner's confirmed choice is final (userTag, stored separately).
 - Decided NOT to build: speed control, accent choice/compare, TTS, real-time competition, Notebook, review schedule, History, Progress, Time Attack, Australian accent, placement test, AI feedback on writing, same-day review flow, delayed review engine, "Today" hub. (Old stages 17-22 are dropped and replaced.)
 - Only one video: Walk With Me. The main screen shows only Practice Mode and Compete Mode.
 - The difficulty level is NOT remembered: the learner picks it every visit, and the level buttons unlock again after watching the video each visit.
@@ -90,7 +90,7 @@ Accessibility: visible keyboard focus, real buttons and labels, respect reduced 
 ## Screens (v2)
 1. Home: only two big choices, Practice Mode and Compete Mode.
 2. Practice: (a) Watch the full video; the level buttons unlock after it has played to the end once (every visit). (b) Choose Easy / Intermediate / Hard. (c) Audio-only dictation: sentence numbers on the left (blue = all blanks correct, red = any blank wrong), the sentence plays once by itself, "Replay" up to 3 times ("Replays left: 3/2/1/0"), Enter moves to the next blank and, on the last blank, submits the sentence. (d) Results: "32 / 40 correct" and a button to the Review Report.
-3. Review Report (the only mistake review): top = biggest weakness (from the learner-confirmed categories). Each incorrect sentence: correct sentence on the left, the learner's answer on the right, category chips (auto guess marked "suggested", one tap to change). "Watch the full video" button: normal player controls without the speed option, and a subtitles toggle (English / Korean / Off). No "Save to notebook".
+3. Review Report (the only mistake review): header with a "View Full Script" button at the upper right. Top = biggest weakness, then a compact "Minor Spelling Errors" box (one-letter typos: counted correct, not listening errors), then "Sentences to Review" with ONLY wrong sentences. Each card: sentence number, Korean meaning, correct answer, my answer, suggested category and confirmed category (7 chips, one tap confirms), and a collapsed "Listening Guidance" (Why you may have missed it / What to listen for / Focus on) that follows the category selected now. The Full Script page (`/review/:id/script`): video on the left with the time, all 18 sentences on the right with start times, the playing sentence highlighted, a click jumps the video, wrong sentences stay red with an "Incorrect" label. No speed option. No "Save to notebook".
 4. Compete: Study page (the 15 key expressions with meanings and example usage), then a 15-question quiz (5 Listen and Type, 5 Meaning Match, 5 Fill in the Gap, mixed, same order for everyone), immediate feedback after each answer (correct/incorrect, the English expression, the Korean meaning if wrong; no changing answers), then Results (12 / 15, percent) and a leaderboard of 6: me (labeled "Latest Result") plus 5 fixed fictional competitors stored in Supabase, ranks 1st-6th, ties share a rank, my row highlighted.
 5. Login and Account.
 Header menu in v2: logo, Practice, Compete, account. No Library, Vocab quiz, Notebook, History or Progress.
@@ -139,15 +139,16 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 - Score = correct blanks / total blanks (for example "32 / 40 correct"). Error categories never change the score.
 - Saved to Supabase: level, score, answers, replays used per sentence, mistake categories.
 
-## Five error categories
-- CS Connected speech, SP Speed, V Unfamiliar vocabulary, AC Accent, MI Missed the main idea.
-- Each wrong or empty blank gets an automatic guess, checked in this order:
-  1. CS: reduced spelling (gonna, dija…), two words merged or split, or word cut short by 2+ letters (mount for mountain)
-  2. V: key expression (a long word alone is NOT a guess for V: learners know academic words)
-  3. MI: 60%+ of a sentence with 3+ blanks missed
-  4. AC: clip accent differs from user's accent and answer is within edit distance 2
-  5. SP: everything else, including empty
-- The review shows all five as chips with the guess marked "suggested"; one tap changes it. Store both autoTag and userTag. One-letter typos count as correct and get no category.
+## Seven mistake categories
+- CS Connected Speech, SP Speed, UE Unfamiliar Expression, V Vocabulary, AC Accent, MI Main Idea, OT Other.
+- Rule-based diagnosis in `src/lib/diagnosis.js` (not an external AI): each missed blank is looked at together with the learner's actual answer; the sentence gets ONE suggested category. Cautious wording only ("may have").
+  1. Empty answer: UE for a key expression, otherwise SP.
+  2. CS only with evidence in the answer: a reduced spelling (gonna), words merged or split (jumpon it), a word cut short (mount), or a colloquial reduction missed.
+  3. Expression groups: UE (partly right or wrong). Single content word: V. Short function word: CS if the answer looks similar, otherwise OT.
+  4. MI: 3+ blanks with 60%+ missed. AC is never suggested (one accent); the learner can pick it. OT when the evidence is not enough.
+- Chips: all seven, the suggestion marked "suggested"; the learner's tap is the confirmed category. Suggestion and confirmed category are saved separately (`auto_tag`, `user_tag` on every missed blank of the sentence). Listening Guidance is built from the category selected now.
+- One-letter typos count as correct and get no category; they appear only in "Minor Spelling Errors".
+- Main weakness = category with the most mistaken sentences (confirmed category, else the suggestion). Run `supabase/stage-19.sql` once in the Supabase SQL Editor (allows the new category codes).
 - Main weakness = category with the most misses, based on the learner's final choice (userTag, else autoTag).
 
 ## Reference code

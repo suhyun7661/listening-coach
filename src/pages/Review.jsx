@@ -1,25 +1,98 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import ClipVideo from '../components/ClipVideo';
 import ErrorSummary from '../components/ErrorSummary';
 import ErrorTagPicker from '../components/ErrorTagPicker';
-import { CATEGORIES, computeScore, mainWeakness, summarizeTags } from '../lib/errorTags';
+import { computeScore, mainWeakness, spellingSlips, summarizeTags, wrongSentences } from '../lib/errorTags';
+import { categoryById, guidance, suggestedTag } from '../lib/diagnosis';
 import { isMiss } from '../lib/grading';
 import { LEVEL_NAMES } from '../lib/blanks';
-import { getClip } from '../lib/clipStore';
 import { getAttempt, setUserTag } from '../lib/attempts';
 import { useAuth } from '../lib/AuthContext';
 
-// The Review Report: the only place to look back at mistakes.
-// Top: the biggest weakness (from the categories the learner confirmed).
-// Then every sentence with a mistake: correct sentence on the left, the learner's answer on the right,
-// and five category chips (the automatic guess is marked "suggested"; one tap changes it).
+// One mistaken sentence: correct answer, your answer, the suggested category, the category YOU confirm,
+// and a collapsible Listening Guidance that always follows the category that is selected now.
+function ReviewCard({ row, confirmed, onConfirm }) {
+  const [open, setOpen] = useState(false);
+  const suggested = suggestedTag(row);
+  const selected = confirmed ?? suggested; // the guidance follows this
+  const tips = guidance(selected, row);
+  const misses = row.tokens.filter((t) => t.type === 'blank' && isMiss(t));
+
+  const sentence = (mode) =>
+    row.tokens.map((t) => {
+      if (t.type === 'text') return <span key={t.index}>{t.raw} </span>;
+      const miss = isMiss(t);
+      let body = t.answer;
+      if (miss && mode === 'correct') body = <strong className="mark mark--ok">{t.answer}</strong>;
+      if (miss && mode === 'yours') body = <span className="mark mark--wrong">{t.userAnswer.trim() || '(empty)'}</span>;
+      return <span key={t.index}>{t.before}{body}{t.after}{' '}</span>;
+    });
+
+  return (
+    <article className="review-row" aria-label={`Sentence ${row.number}`}>
+      <header className="review-row__head">
+        <span className="review-row__num">Sentence {row.number}</span>
+        {row.ko && <span lang="ko" className="review-row__ko">{row.ko}</span>}
+      </header>
+
+      <div className="review-row__cols">
+        <div className="review-col">
+          <p className="review-col__label">Correct answer</p>
+          <p className="review-col__text">{sentence('correct')}</p>
+        </div>
+        <div className="review-col">
+          <p className="review-col__label">Your answer</p>
+          <p className="review-col__text">{sentence('yours')}</p>
+        </div>
+      </div>
+
+      {row.keyWords.map((kw) => (
+        <p key={kw.word} className="review-row__note">
+          <strong>{kw.word}</strong> = <span lang="ko">{kw.ko}</span>{kw.note ? `. ${kw.note}` : ''}
+        </p>
+      ))}
+
+      <div className="review-row__miss">
+        <p className="category-line">
+          <span>Suggested category: <strong className={`text--${suggested}`}>{categoryById(suggested).label}</strong></span>
+          <span>Confirmed category: {confirmed ? <strong className={`text--${confirmed}`}>{categoryById(confirmed).label}</strong> : <em>not confirmed yet</em>}</span>
+        </p>
+        <p className="muted">
+          {misses.length > 1 ? `${misses.length} parts of this sentence were missed. ` : ''}
+          This is a first guess from your answer, not a verdict. Tap the category that fits best; your choice is the final one.
+        </p>
+        <ErrorTagPicker suggested={suggested} confirmed={confirmed} onChange={(tag) => onConfirm(row.sentenceId, tag)} label={`Mistake category for sentence ${row.number}`} />
+      </div>
+
+      <div className="guidance">
+        <button type="button" className="guidance__toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span>Listening Guidance</span>
+          <span aria-hidden="true">{open ? '−' : '+'}</span>
+        </button>
+        {open && (
+          <div className="guidance__body" aria-live="polite">
+            <p className="guidance__for">
+              For: <strong className={`text--${selected}`}>{categoryById(selected).label}</strong>{confirmed ? '' : ' (suggested, not confirmed yet)'}
+            </p>
+            <h3>Why you may have missed it</h3>
+            <p>{tips.why}</p>
+            <h3>What to listen for</h3>
+            <p>{tips.listen}</p>
+            <h3>Focus on</h3>
+            <p className="guidance__focus">{tips.focus}</p>
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+// The Review Report: the only place to look back at mistakes. It shows ONLY the sentences that were wrong.
 export default function Review() {
   const { attemptId } = useParams();
   const auth = useAuth();
   const [attempt, setAttempt] = useState(undefined); // undefined = loading, null = not found
-  const [userTags, setUserTags] = useState({});
-  const [showVideo, setShowVideo] = useState(false);
+  const [userTags, setUserTags] = useState({}); // confirmed categories, keyed by sentence id
   const [tagError, setTagError] = useState('');
 
   useEffect(() => {
@@ -32,15 +105,14 @@ export default function Review() {
         setUserTags(a?.userTags ?? {});
       })
       .catch(() => alive && setAttempt(null));
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [auth.loading, auth.user, attemptId]);
 
   const results = attempt?.results ?? [];
   const score = useMemo(() => computeScore(results), [results]);
+  const wrong = useMemo(() => wrongSentences(results), [results]);
+  const slips = useMemo(() => spellingSlips(results), [results]);
   const counts = useMemo(() => summarizeTags(results, userTags), [results, userTags]);
-  const clip = attempt ? getClip(attempt.clipId) : null;
 
   if (attempt === undefined) {
     return <div className="page"><p className="muted">Loading your report…</p></div>;
@@ -55,26 +127,28 @@ export default function Review() {
     );
   }
 
-  // The learner's choice is stored next to the automatic guess (userTag vs autoTag).
-  async function setTag(blankId, tag) {
-    const next = { ...userTags, [blankId]: tag };
+  // The learner's confirmed category is saved next to the suggestion (userTag vs autoTag).
+  async function confirm(sentenceId, tag) {
+    const next = { ...userTags, [sentenceId]: tag };
     setUserTags(next);
     setTagError('');
     try {
-      await setUserTag(auth.user, attempt, blankId, next);
+      await setUserTag(auth.user, attempt, sentenceId, next);
     } catch {
-      setTagError('Your category change could not be saved. Please try again.');
+      setTagError('Your category could not be saved. Please try again.');
     }
   }
 
-  const weakId = mainWeakness(counts);
-  const weak = CATEGORIES.find((c) => c.id === weakId);
-  const wrongRows = results.filter((row) => row.tokens.some((t) => t.type === 'blank' && isMiss(t)));
+  const weak = categoryById(mainWeakness(counts));
+  const confirmedCount = wrong.filter((r) => userTags[r.sentenceId]).length;
 
   return (
     <div className="page review">
       <Link to="/practice" className="back-link">‹ Back to Practice</Link>
-      <h1 className="page__title">Review Report</h1>
+      <header className="review-head">
+        <h1 className="page__title">Review Report</h1>
+        <Link to={`/review/${attempt.id}/script`} className="btn btn--outline">View Full Script</Link>
+      </header>
       {tagError && <p className="form__error" role="alert">{tagError}</p>}
 
       <div className="review-top">
@@ -89,84 +163,38 @@ export default function Review() {
             <p className="weak-card__name">None. Great listening!</p>
           )}
           <p className="weak-card__score">{score.correct} / {score.total} correct · {LEVEL_NAMES[attempt.level] ?? `Level ${attempt.level}`}</p>
+          {wrong.length > 0 && <p className="muted">{confirmedCount} of {wrong.length} mistaken sentences confirmed by you. Unconfirmed ones use the suggestion.</p>}
         </section>
         <ErrorSummary counts={counts} title="Your mistakes by category" scope="in this round" />
       </div>
 
-      <div className="review-actions">
-        <button type="button" className="btn btn--outline" aria-expanded={showVideo} onClick={() => setShowVideo(!showVideo)}>
-          {showVideo ? 'Hide the video' : 'Watch the full video'}
-        </button>
-        <Link to="/practice" className="btn btn--primary">Practice again</Link>
-      </div>
-
-      {showVideo && clip && (
-        <section className="review-video" aria-label="Full video">
-          <ClipVideo clip={clip} subtitleModes={['off', 'en', 'ko']} />
+      {slips.length > 0 && (
+        <section className="spelling" aria-labelledby="spell-h">
+          <h2 id="spell-h" className="spelling__title">Minor Spelling Errors</h2>
+          <p className="muted">Minor spelling mistake. The intended word was recognized correctly. These count as correct and are not listening errors.</p>
+          <ul className="spelling__list">
+            {slips.map((s) => (
+              <li key={`${s.number}-${s.answer}`}>
+                <span className="spelling__num">#{s.number}</span>
+                <span>Correct: <strong>{s.answer}</strong></span>
+                <span>Yours: <span className="mark mark--almost">{s.userAnswer}</span></span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
-      <h2 className="section-title">{wrongRows.length ? 'Sentences to review' : 'No mistakes'}</h2>
-      {wrongRows.length === 0 && <p className="page__lead">Every sentence was correct. Try a harder level or Compete Mode.</p>}
+      <div className="review-actions">
+        <Link to="/practice" className="btn btn--primary">Practice again</Link>
+      </div>
+
+      <h2 className="section-title">{wrong.length ? 'Sentences to Review' : 'No sentences to review'}</h2>
+      {wrong.length === 0 && <p className="page__lead">Every sentence was understood. Try a harder level or Compete Mode.</p>}
 
       <div className="stack stack--lg">
-        {wrongRows.map((row) => {
-          const misses = row.tokens.filter((t) => t.type === 'blank' && isMiss(t));
-          return (
-            <article key={row.sentenceId} className="review-row">
-              <header className="review-row__head">
-                <span className="review-row__num">Sentence {row.number}</span>
-                {row.ko && <span lang="ko" className="review-row__ko">{row.ko}</span>}
-              </header>
-
-              <div className="review-row__cols">
-                <div className="review-col">
-                  <p className="review-col__label">Correct sentence</p>
-                  <p className="review-col__text">
-                    {row.tokens.map((t) => {
-                      if (t.type === 'text') return <span key={t.index}>{t.raw} </span>;
-                      return (
-                        <span key={t.index}>
-                          {t.before}
-                          {isMiss(t) ? <strong className="mark mark--ok">{t.answer}</strong> : t.answer}
-                          {t.after}{' '}
-                        </span>
-                      );
-                    })}
-                  </p>
-                </div>
-                <div className="review-col">
-                  <p className="review-col__label">Your answer</p>
-                  <p className="review-col__text">
-                    {row.tokens.map((t) => {
-                      if (t.type === 'text') return <span key={t.index}>{t.raw} </span>;
-                      return (
-                        <span key={t.index}>
-                          {t.before}
-                          {isMiss(t) ? <span className="mark mark--wrong">{t.userAnswer.trim() || '(empty)'}</span> : t.answer}
-                          {t.after}{' '}
-                        </span>
-                      );
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              {row.keyWords.map((kw) => (
-                <p key={kw.word} className="review-row__note">
-                  <strong>{kw.word}</strong> = <span lang="ko">{kw.ko}</span>{kw.note ? `. ${kw.note}` : ''}
-                </p>
-              ))}
-
-              {misses.map((m) => (
-                <div key={m.blankId} className="review-row__miss">
-                  <span>Why did you miss <strong>{m.answer}</strong>?</span>
-                  <ErrorTagPicker autoTag={m.autoTag} value={userTags[m.blankId]} onChange={(tag) => setTag(m.blankId, tag)} word={m.answer} />
-                </div>
-              ))}
-            </article>
-          );
-        })}
+        {wrong.map((row) => (
+          <ReviewCard key={row.sentenceId} row={row} confirmed={userTags[row.sentenceId]} onConfirm={confirm} />
+        ))}
       </div>
     </div>
   );

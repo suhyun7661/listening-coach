@@ -12,7 +12,7 @@ export default function ErrorSummary({ counts, title = 'Why you missed them', sc
       <ul className="bars">
         {CATEGORIES.map((c) => (
           <li key={c.id} className="bars__row">
-            <span className={`bars__name text--${c.id}`}>{c.id} · {c.label}</span>
+            <span className={`bars__name text--${c.id}`}>{c.label}</span>
             <span className="bars__track">
               <span className={`bars__fill fill--${c.id}`} style={{ width: `${(counts[c.id] / max) * 100}%` }} />
             </span>
@@ -22,12 +22,11 @@ export default function ErrorSummary({ counts, title = 'Why you missed them', sc
       </ul>
       <p className="bars__main">
         {mainCategory ? (
-          <>Main weakness {scope}: <strong>{mainCategory.label} ({mainCategory.id})</strong> <span lang="ko">{mainCategory.ko}</span></>
+          <>Main weakness {scope}: <strong>{mainCategory.label}</strong> <span lang="ko">{mainCategory.ko}</span></>
         ) : (
           `No missed words ${scope}.`
         )}
       </p>
-      <p className="muted">Tags are guessed automatically (marked “suggested”). Tap another tag on any word to change it.</p>
     </section>
   );
 }

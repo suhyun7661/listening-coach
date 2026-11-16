@@ -27,9 +27,10 @@ export async function getAttempt(user, id) {
   return found ? { ...found, where: 'browser' } : null;
 }
 
-export async function setUserTag(user, attempt, blankId, nextTags) {
+// nextTags is keyed by sentence id: { s3: 'CS', ... }
+export async function setUserTag(user, attempt, sentenceId, nextTags) {
   if (attempt.where === 'account' && online(user)) {
-    await dbSetUserTag(attempt.id, attempt.results, blankId, nextTags[blankId]);
+    await dbSetUserTag(attempt.id, sentenceId, nextTags[sentenceId]);
   } else {
     local.saveUserTags(attempt.id, nextTags);
   }

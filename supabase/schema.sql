@@ -64,8 +64,8 @@ create table if not exists public.blank_results (
   user_answer  text not null default '',
   status       text not null check (status in ('correct', 'almost', 'wrong', 'empty')),
   points       numeric(2, 1) not null,
-  auto_tag     text check (auto_tag in ('CS', 'SP', 'V', 'AC', 'MI')),   -- our guess
-  user_tag     text check (user_tag in ('CS', 'SP', 'V', 'AC', 'MI')),   -- the learner's choice
+  auto_tag     text check (auto_tag in ('CS', 'SP', 'UE', 'V', 'AC', 'MI', 'OT')),   -- our suggestion
+  user_tag     text check (user_tag in ('CS', 'SP', 'UE', 'V', 'AC', 'MI', 'OT')),   -- the category the learner confirmed
   unique (attempt_id, sentence_id, blank_index)
 );
 create index if not exists blank_results_user_idx on public.blank_results (user_id);
@@ -128,3 +128,12 @@ alter table public.quiz_results enable row level security;
 drop policy if exists "quiz_results: own" on public.quiz_results;
 create policy "quiz_results: own" on public.quiz_results
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ============================================================ seven categories (Review Report update)
+-- (for a database made before this update; safe to run again)
+alter table public.blank_results drop constraint if exists blank_results_auto_tag_check;
+alter table public.blank_results drop constraint if exists blank_results_user_tag_check;
+alter table public.blank_results
+  add constraint blank_results_auto_tag_check check (auto_tag in ('CS', 'SP', 'UE', 'V', 'AC', 'MI', 'OT'));
+alter table public.blank_results
+  add constraint blank_results_user_tag_check check (user_tag in ('CS', 'SP', 'UE', 'V', 'AC', 'MI', 'OT'));

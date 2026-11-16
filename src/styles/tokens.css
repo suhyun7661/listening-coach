@@ -32,6 +32,9 @@
   --v-bg: rgba(107, 155, 255, 0.2);  --v-text: #b3ceff;
   --ac-bg: rgba(92, 207, 159, 0.2);  --ac-text: #96e6c4;
   --mi-bg: rgba(255, 123, 160, 0.2); --mi-text: #ffb3c9;
+  --ue-bg: rgba(86, 204, 242, 0.2);  --ue-text: #a5e4f9;
+  --ot-bg: rgba(169, 178, 198, 0.2); --ot-text: #d5dae6;
+  --ue-fill: #56ccf2; --ot-fill: #a9b2c6;
   --cs-fill: #a78bfa; --sp-fill: #ffa766; --v-fill: #6b9bff; --ac-fill: #5ccf9f; --mi-fill: #ff7ba0;
 
   /* Type */

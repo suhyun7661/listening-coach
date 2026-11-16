@@ -20,20 +20,10 @@ export function rowsFromResults(results) {
         user_answer: t.userAnswer ?? '',
         status: t.status,
         points: t.points,
-        auto_tag: isMiss(t) ? t.autoTag ?? null : null,
+        auto_tag: isMiss(t) ? r.autoTag ?? t.autoTag ?? null : null, // the suggested category of the sentence
         user_tag: null,
       }))
   );
-}
-
-// Finds which database row a blank belongs to (sentence id + position among the blanks).
-export function locateBlank(results, blankId) {
-  for (const r of results) {
-    const blanks = r.tokens.filter((t) => t.type === 'blank');
-    const i = blanks.findIndex((b) => b.blankId === blankId);
-    if (i !== -1) return { sentence_id: r.sentenceId, blank_index: i };
-  }
-  return null;
 }
 
 // attempts row (+ its blank_results) -> the same shape the Review page uses
@@ -53,17 +43,20 @@ export function rebuildAttempt(row) {
       n += 1;
       const blankId = `${s.id}-${t.index}`;
       if (!b) return { ...t, blankId, userAnswer: '', status: 'empty', points: 0 };
-      if (b.user_tag) userTags[blankId] = b.user_tag;
       return {
         ...t,
         blankId,
         userAnswer: b.user_answer,
         status: b.status,
         points: Number(b.points),
-        autoTag: b.auto_tag ?? undefined,
       };
     });
-    return { sentenceId: s.id, number: si + 1, text: s.text, ko: s.ko, keyWords: s.keyWords ?? [], tokens };
+    // The suggested category and the learner's choice are saved on every missed blank of the sentence.
+    const missRows = Object.values(saved[s.id] ?? {}).filter((b) => b.status === 'wrong' || b.status === 'empty');
+    const autoTag = missRows.find((b) => b.auto_tag)?.auto_tag;
+    const userTag = missRows.find((b) => b.user_tag)?.user_tag;
+    if (userTag) userTags[s.id] = userTag;
+    return { sentenceId: s.id, number: si + 1, text: s.text, ko: s.ko, keyWords: s.keyWords ?? [], tokens, ...(autoTag ? { autoTag } : {}) };
   });
   return {
     id: row.id,
@@ -106,14 +99,13 @@ export async function dbGetAttempt(id) {
   return data[0] ? rebuildAttempt(data[0]) : null;
 }
 
-export async function dbSetUserTag(attemptId, results, blankId, tag) {
-  const where = locateBlank(results, blankId);
-  if (!where) return;
+// The learner's confirmed category is saved on every missed blank of that sentence.
+export async function dbSetUserTag(attemptId, sentenceId, tag) {
   const { error } = await supabase
     .from('blank_results')
     .update({ user_tag: tag })
     .eq('attempt_id', attemptId)
-    .eq('sentence_id', where.sentence_id)
-    .eq('blank_index', where.blank_index);
+    .eq('sentence_id', sentenceId)
+    .in('status', ['wrong', 'empty']);
   if (error) throw error;
 }

@@ -43,11 +43,14 @@ Context: a university assignment. The professor opens one public URL and tests t
 4. **Results.** Total correct blanks (for example "32 / 40 correct") and a button to the Review Report.
 5. **Saved in Supabase** for each practice: level, score, answers, replays used per sentence, mistake categories. (Saved so the Review Report can show it; there is no history page.)
 
-## 4. Review Report
-- **Top:** the learner's biggest weakness, based on the final categories the learner confirmed.
-- **Each incorrect sentence:** the correct sentence on the left, the learner's answer on the right.
-- **Five categories:** Speed (SP), New Word (V), Connected Speech (CS), Accent (AC), Main Idea (MI). Each mistake gets an automatic guess. The learner can change it. The final category is the learner's choice. The guess is a first diagnosis, not a final judgment.
-- **"Watch the full video" button:** opens the full video with normal player controls (the playback speed option is hidden) and an optional subtitles toggle: English / Korean / Off.
+## 4. Review Report (updated 2026-11-17)
+- **Header:** title and a "View Full Script" button at the upper right (opens a separate Full Script page).
+- **Top:** score and the biggest weakness (from the categories the learner confirmed; unconfirmed sentences use the suggestion).
+- **Minor Spelling Errors:** a compact box for one-letter typos ("Minor spelling mistake. The intended word was recognized correctly."). They count as correct and are never listening errors.
+- **Sentences to Review:** only sentences answered incorrectly. Each card: sentence number, Korean meaning, correct answer, the learner's answer, Suggested category, Confirmed category, and a collapsed Listening Guidance.
+- **Seven categories:** Connected Speech, Speed, Unfamiliar Expression, Vocabulary, Accent, Main Idea, Other. The suggestion comes from comparing the correct answer with the learner's actual answer (rule-based, cautious wording, Other when the evidence is not enough). The learner's choice is the final confirmed category. Both are stored separately and kept when the report is reopened.
+- **Listening Guidance (collapsed by default):** "Why you may have missed it", "What to listen for", "Focus on". It always matches the category selected now and changes immediately when the learner picks another one.
+- **Full Script page:** two columns. Left: the video with normal controls (no speed option) and the current time. Right: all sentences with number and start time. The playing sentence is highlighted, clicking a sentence jumps the video there and plays, sentences answered incorrectly stay red with an "Incorrect" label (visually different from the playing highlight). A back link returns to the Review Report.
 
 ## 5. Compete Mode (a vocabulary game, not a race)
 Updated 2026-11-17 (owner decisions; replaces the old "15 meaning-choice questions" plan). Goal: feel like a competitive vocabulary game while still teaching. It tests three abilities: listening recognition, meaning comprehension, and contextual expression recall.
