@@ -20,7 +20,6 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
   const [answers, setAnswers] = useState(() => emptyAnswers(tokensBySentence));
   const [marks, setMarks] = useState([]); // per sentence: 'correct' | 'wrong'
   const [replays, setReplays] = useState({}); // sentence id -> replays used
-  const [note, setNote] = useState('');
   const [blocked, setBlocked] = useState(false); // the browser did not allow the automatic play
 
   const { play, stop, playing } = useSegmentAudio(audioSrc);
@@ -66,14 +65,7 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
       return { b, typed, ...gradeAnswer(typed, b.answer) };
     });
     const allRight = graded.every((g) => g.status === 'correct' || g.status === 'almost');
-    const typos = graded.filter((g) => g.status === 'almost');
     setMarks((m) => [...m.slice(0, index), allRight ? 'correct' : 'wrong']);
-    if (allRight) {
-      const spelling = typos.map((g) => `“${g.typed}” → “${g.b.answer}”`).join(', ');
-      setNote(`Sentence ${index + 1}: correct.${typos.length ? ` Check spelling: ${spelling}.` : ''}`);
-    } else {
-      setNote('');
-    }
     if (index < sentences.length - 1) {
       setIndex(index + 1);
     } else {
@@ -153,7 +145,6 @@ export default function DictationStep({ clip, level, audioSrc, onFinish, onExit 
               <>Your browser did not play the sound by itself. <button type="button" className="linklike" onClick={playFree}>Play the sentence</button></>
             ) : playing ? 'Playing…' : 'Type what you hear. Enter moves to the next blank. Enter on the last blank checks the sentence.'}
           </p>
-          {note && <p className="dictation__note" role="status">{note}</p>}
 
           <div className="dictation__actions">
             <button type="button" className="btn btn--primary btn--lg" onClick={submit}>
