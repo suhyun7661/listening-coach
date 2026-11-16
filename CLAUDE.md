@@ -30,7 +30,7 @@ Listening Coach is an English listening practice website for Korean learners who
 - Stage 7 (Deploy to Vercel) is on hold. `vercel.json` is already prepared and stays unused. Continue with the other stages; ask me before deploying. The goal is a public URL for my professor, but only at the very end and only when I say so.
 
 ## Current status (updated 2026-11-16)
-- The v2 design is decided (reference/feature-design-v2.md). Stages 17 (clean-up) and 18 (Practice) are DONE. Practice now works: Watch the video, unlock levels, choose Easy / Intermediate / Hard, audio-only dictation from `public/audio/walk-with-me.mp3`, Results, saved attempt. Review still shows the old report (Stage 19 rebuilds it). Compete is a placeholder. Stages 19-22 are not started; waiting for my OK to start Stage 19. I must run `supabase/stage-18.sql` once in the Supabase SQL Editor (adds the `replays` column).
+- The v2 design is decided (reference/feature-design-v2.md). Stages 17 (clean-up), 18 (Practice) and 19 (Review Report) are DONE. Practice: Watch the video, unlock levels, Easy / Intermediate / Hard, audio-only dictation, Results. Review Report: biggest weakness at the top, each wrong sentence with the correct sentence left and my answer right, five categories (Speed, New Word, Connected Speech, Accent, Main Idea) with one-tap change, "Watch the full video" with English / Korean / Off subtitles. Compete is a placeholder. Stages 20-22 are not started; waiting for my OK to start Stage 20. I must run `supabase/stage-18.sql` once in the Supabase SQL Editor (adds the `replays` column).
 - Database: I must run `supabase/cleanup-v2.sql` ONCE in the Supabase SQL Editor (it drops the old room, notebook, clips and admin parts and keeps users, attempts and reports). Then `supabase/schema.sql` can be run (safe to repeat).
 - Video: `public/videos/walk-with-me.mp4` (about 58 s, 18 lines), used directly from the `public/` folder. Not managed through Admin or Supabase.
 - Audio: I make `public/audio/walk-with-me.mp3` myself (extracted from the video) and save it there. Claude does not install ffmpeg or extract audio; the app just loads that file.
@@ -143,7 +143,7 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 - CS Connected speech, SP Speed, V Unfamiliar vocabulary, AC Accent, MI Missed the main idea.
 - Each wrong or empty blank gets an automatic guess, checked in this order:
   1. CS: reduced spelling (gonna, dija…), two words merged or split, or word cut short by 2+ letters (mount for mountain)
-  2. V: key expression, or uncommon word of 6+ letters
+  2. V: key expression (a long word alone is NOT a guess for V: learners know academic words)
   3. MI: 60%+ of a sentence with 3+ blanks missed
   4. AC: clip accent differs from user's accent and answer is within edit distance 2
   5. SP: everything else, including empty
@@ -169,7 +169,7 @@ Three levels (each level up removes hints; hints appear automatically, no hint b
 Done: old stages 1-6, 8-15 and v2 Stage 17. Stage 7 (deploy) on hold. The v2 stages 18-22 are decided but NOT started; do them one at a time and wait for my OK.
 17. DONE. Clean-up and removals (one clip from `public/`, no sample clips, no speed / accents / TTS, no History / Progress / Notebook / Vocab quiz, no rooms / Realtime, no Admin; database cleanup in `supabase/cleanup-v2.sql`).
 18. DONE. Practice: Watch step, level unlock, 3 levels, audio-only dictation from my mp3, replays, Enter to submit, blue/red sentence numbers, results, save to Supabase (replays per sentence; needs `supabase/stage-18.sql`).
-19. Review Report: correct sentence left / learner answer right, five categories with manual change, weakness at the top, "Watch the full video" with subtitles toggle.
+19. DONE. Review Report: correct sentence left / learner answer right, five categories with manual change, weakness at the top, "Watch the full video" with subtitles toggle. Only wrong sentences are listed; the V guess now means key expression only.
 20. Compete quiz: study page, 15 mixed questions (3 types), feedback after each, results, leaderboard vs 5 fixed fictional competitors, new `quiz_benchmarks` and `quiz_results` tables, motivational result message.
 21. Home with two choices and a simple menu; "try Compete" after Practice.
 22. Deploy to a public URL (only when I say so), then the professor's test.
@@ -177,6 +177,6 @@ Done: old stages 1-6, 8-15 and v2 Stage 17. Stage 7 (deploy) on hold. The v2 sta
 ## Known issues and next fixes (2026-11-16)
 - Easy-level Korean word meanings (`glosses`) are written for all Walk With Me sentences (Stage 18). I should listen-test the audio in the browser once (the sentence must start and stop at the right places).
 - The video file (about 28 MB) and `public/` are not committed to git yet; they must be committed before deploying (decide with me first).
-- The "V" error guess marks any uncommon word of 6+ letters as unfamiliar, which is wrong for learners strong in academic vocabulary. Fix with the Review Report stage.
+- (Fixed in Stage 19) The V guess no longer marks long words.
 - Replays per sentence are saved in `attempts.replays` after I run `supabase/stage-18.sql`.
 - The automatic guess for AC (Accent) was removed (the app has one accent). The learner can still pick Accent by hand.
