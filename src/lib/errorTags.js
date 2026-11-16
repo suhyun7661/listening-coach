@@ -1,6 +1,6 @@
 import { gradeAnswer, isMiss } from './grading';
 import { answerText } from './textUtils';
-import { CATEGORIES, CATEGORY_IDS, diagnoseSentence, suggestedTag } from './diagnosis';
+import { CATEGORIES, CATEGORY_IDS, cleanTag, diagnoseSentence } from './diagnosis';
 
 export { CATEGORIES, CATEGORY_IDS };
 
@@ -50,15 +50,22 @@ export function spellingSlips(results) {
   );
 }
 
-// The learner's confirmed choice (userTags is keyed by sentence id) wins over the suggestion.
-export function finalTag(row, userTags = {}) {
-  return userTags[row.sentenceId] ?? suggestedTag(row);
+// Only the learner's confirmed choice (userTags is keyed by sentence id) is final.
+// A suggestion is never treated as confirmed.
+export function confirmedTag(row, userTags = {}) {
+  return cleanTag(userTags[row.sentenceId]);
 }
 
+// Counts mistaken sentences per CONFIRMED category, plus how many are still waiting for a choice.
 export function summarizeTags(results, userTags = {}) {
   const counts = Object.fromEntries(CATEGORY_IDS.map((id) => [id, 0]));
-  wrongSentences(results).forEach((row) => { counts[finalTag(row, userTags)] += 1; });
-  return counts;
+  let pending = 0;
+  wrongSentences(results).forEach((row) => {
+    const tag = confirmedTag(row, userTags);
+    if (tag) counts[tag] += 1;
+    else pending += 1;
+  });
+  return { counts, pending };
 }
 
 // Category with the most mistaken sentences; null when there are none.

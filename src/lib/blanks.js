@@ -27,7 +27,7 @@ export function describeHints(level) {
   return 'No hints';
 }
 
-const FUNCTION_WORDS = new Set(
+export const FUNCTION_WORDS = new Set(
   'a an the on in at to of for and or but is are was were be am i you he she it we they my your his her its our their me him us them this that these those do did does not so as by with from up out just then now good if what who how why when there here too very will would can could should have has had been get got let go going say says'.split(' ')
 );
 const SPEED_WORDS = new Set(
@@ -37,9 +37,9 @@ const CONNECTED_WORDS = new Set(
   "gonna wanna gotta kinda sorta lemme gimme dunno outta did going want let what don't didn't can't won't i'm you're it's that's".split(' ')
 );
 // Colloquial reductions: always worth a blank in Intermediate and Hard.
-const COLLOQUIAL = new Set(['gonna', 'wanna', 'gotta', 'kinda', 'sorta', 'lemme', 'gimme', 'dunno', 'outta']);
+export const COLLOQUIAL = new Set(['gonna', 'wanna', 'gotta', 'kinda', 'sorta', 'lemme', 'gimme', 'dunno', 'outta']);
 const PROPER_NOUNS = new Set(['ryan', "henderson's", 'friday']);
-const CONTRACTION = /['’](s|m|re|ve|d|ll)$|n['’]t$/i;
+export const CONTRACTION = /['’](s|m|re|ve|d|ll)$|n['’]t$/i;
 
 const plain = (w) => w.toLowerCase().replace(/[’]/g, "'");
 const letterCount = (w) => w.replace(/['’-]/g, '').length;

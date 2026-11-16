@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ErrorSummary from '../components/ErrorSummary';
 import ErrorTagPicker from '../components/ErrorTagPicker';
@@ -94,6 +94,7 @@ export default function Review() {
   const [attempt, setAttempt] = useState(undefined); // undefined = loading, null = not found
   const [userTags, setUserTags] = useState({}); // confirmed categories, keyed by sentence id
   const [tagError, setTagError] = useState('');
+  const tagsRef = useRef({}); // always the latest confirmed tags, even when taps come very fast
 
   useEffect(() => {
     if (auth.loading) return undefined;
@@ -102,7 +103,8 @@ export default function Review() {
       .then((a) => {
         if (!alive) return;
         setAttempt(a);
-        setUserTags(a?.userTags ?? {});
+        tagsRef.current = a?.userTags ?? {};
+        setUserTags(tagsRef.current);
       })
       .catch(() => alive && setAttempt(null));
     return () => { alive = false; };
@@ -112,7 +114,7 @@ export default function Review() {
   const score = useMemo(() => computeScore(results), [results]);
   const wrong = useMemo(() => wrongSentences(results), [results]);
   const slips = useMemo(() => spellingSlips(results), [results]);
-  const counts = useMemo(() => summarizeTags(results, userTags), [results, userTags]);
+  const { counts, pending } = useMemo(() => summarizeTags(results, userTags), [results, userTags]);
 
   if (attempt === undefined) {
     return <div className="page"><p className="muted">Loading your report…</p></div>;
@@ -129,7 +131,8 @@ export default function Review() {
 
   // The learner's confirmed category is saved next to the suggestion (userTag vs autoTag).
   async function confirm(sentenceId, tag) {
-    const next = { ...userTags, [sentenceId]: tag };
+    const next = { ...tagsRef.current, [sentenceId]: tag };
+    tagsRef.current = next;
     setUserTags(next);
     setTagError('');
     try {
@@ -140,32 +143,46 @@ export default function Review() {
   }
 
   const weak = categoryById(mainWeakness(counts));
-  const confirmedCount = wrong.filter((r) => userTags[r.sentenceId]).length;
+  const confirmedCount = wrong.length - pending;
+  const complete = pending === 0; // the Diagnosis Report opens only when every mistaken sentence is confirmed
 
   return (
     <div className="page review">
       <Link to="/practice" className="back-link">‹ Back to Practice</Link>
       <header className="review-head">
         <h1 className="page__title">Review Report</h1>
-        <Link to={`/review/${attempt.id}/script`} className="btn btn--outline">View Full Script</Link>
+        <div className="review-head__buttons">
+          {complete ? (
+            <Link to={`/review/${attempt.id}/diagnosis`} className="btn btn--primary">View Diagnosis Report</Link>
+          ) : (
+            <button type="button" className="btn btn--primary" disabled aria-describedby="diag-note">View Diagnosis Report</button>
+          )}
+          <Link to={`/review/${attempt.id}/script`} className="btn btn--outline">View Full Script</Link>
+        </div>
       </header>
+      {!complete && (
+        <p id="diag-note" className="notice" role="status">
+          Incomplete: {pending} of {wrong.length} mistaken {wrong.length === 1 ? 'sentence is' : 'sentences are'} not confirmed yet.
+          Confirm a category for each one to open the Diagnosis Report. Suggestions are not counted as confirmed.
+        </p>
+      )}
       {tagError && <p className="form__error" role="alert">{tagError}</p>}
 
       <div className="review-top">
         <section className="weak-card" aria-labelledby="weak-h">
-          <p className="weak-card__label" id="weak-h">Your biggest weakness</p>
+          <p className="weak-card__label" id="weak-h">Your biggest weakness{!complete && weak ? ' (so far)' : ''}</p>
           {weak ? (
             <>
               <p className="weak-card__name">{weak.label} <span lang="ko">{weak.ko}</span></p>
               <p className="weak-card__text">{weak.description}</p>
             </>
           ) : (
-            <p className="weak-card__name">None. Great listening!</p>
+            <p className="weak-card__name">{complete ? 'None. Great listening!' : 'Not decided yet'}</p>
           )}
           <p className="weak-card__score">{score.correct} / {score.total} correct · {LEVEL_NAMES[attempt.level] ?? `Level ${attempt.level}`}</p>
-          {wrong.length > 0 && <p className="muted">{confirmedCount} of {wrong.length} mistaken sentences confirmed by you. Unconfirmed ones use the suggestion.</p>}
+          {wrong.length > 0 && <p className="muted">{confirmedCount} of {wrong.length} mistaken sentences confirmed by you.</p>}
         </section>
-        <ErrorSummary counts={counts} title="Your mistakes by category" scope="in this round" />
+        <ErrorSummary counts={counts} pending={pending} title="Your mistakes by category" scope="in this round" />
       </div>
 
       {slips.length > 0 && (

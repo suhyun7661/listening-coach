@@ -10,6 +10,9 @@ const mmss = (t) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
+// A sentence can be played only if it has a real start time (never invented).
+const hasTime = (s) => typeof s.start === 'number' && Number.isFinite(s.start) && s.start >= 0;
+
 // The Full Script: the video on the left, every sentence on the right.
 // The current sentence follows the video; click a sentence to jump to it. Sentences you got wrong stay red.
 export default function ReviewScript() {
@@ -33,7 +36,7 @@ export default function ReviewScript() {
 
   // The sentence that is playing: the last one that has started.
   let current = -1;
-  clip.sentences.forEach((s, i) => { if (time >= s.start - 0.05) current = i; });
+  clip.sentences.forEach((s, i) => { if (hasTime(s) && time >= s.start - 0.05) current = i; });
 
   // Keep the current sentence in view inside the transcript box (without moving the whole page).
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function ReviewScript() {
 
   function jump(start) {
     const v = video.current;
-    if (!v) return;
+    if (!v || !Number.isFinite(start)) return;
     v.currentTime = start;
     v.play().catch(() => {});
   }
@@ -58,6 +61,11 @@ export default function ReviewScript() {
     <div className="page script-view">
       <Link to={back} className="back-link">‹ Back to Review Report</Link>
       <h1 className="page__title">Full Script</h1>
+      {clip.sentences.some((s) => !hasTime(s)) && (
+        <p className="notice" role="status">
+          Sentence {clip.sentences.filter((s) => !hasTime(s)).map((s) => clip.sentences.indexOf(s) + 1).join(', ')} has no valid start time in the lesson data, so it cannot be played from here.
+        </p>
+      )}
       {!attempt && <p className="muted">No report was found, so no sentences are marked as incorrect.</p>}
 
       <div className="script-grid">
@@ -84,16 +92,18 @@ export default function ReviewScript() {
           <ol ref={list} className="transcript">
             {clip.sentences.map((s, i) => {
               const wrong = wrongIds.has(s.id);
+              const timed = hasTime(s);
               return (
                 <li key={s.id} data-index={i}>
                   <button
                     type="button"
                     className={`transcript__line${i === current ? ' is-current' : ''}${wrong ? ' is-wrong' : ''}`}
                     aria-current={i === current ? 'true' : undefined}
+                    disabled={!timed}
                     onClick={() => jump(s.start)}
                   >
                     <span className="transcript__num">{i + 1}</span>
-                    <span className="transcript__time">{mmss(s.start)}</span>
+                    <span className="transcript__time">{timed ? mmss(s.start) : 'no time'}</span>
                     <span className="transcript__text">{s.text}</span>
                     {wrong && <span className="transcript__flag">Incorrect</span>}
                   </button>

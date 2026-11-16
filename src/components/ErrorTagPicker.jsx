@@ -1,6 +1,6 @@
 import { CATEGORIES } from '../lib/errorTags';
 
-// The seven categories for ONE mistaken sentence.
+// The four categories for ONE mistaken sentence.
 //   suggested = the app's first diagnosis (marked "suggested", never final)
 //   confirmed = the category the learner chose (the final one); empty until they tap one
 // One tap confirms a category. Tapping another one changes it.

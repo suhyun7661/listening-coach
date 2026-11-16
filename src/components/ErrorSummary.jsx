@@ -1,7 +1,7 @@
 import { CATEGORIES, mainWeakness } from '../lib/errorTags';
 
-// The five categories as bars, with the main weakness underneath.
-export default function ErrorSummary({ counts, title = 'Why you missed them', scope = 'in this clip' }) {
+// The four categories as bars (confirmed categories only), with the main weakness underneath.
+export default function ErrorSummary({ counts, pending = 0, title = 'Why you missed them', scope = 'in this clip' }) {
   const max = Math.max(1, ...Object.values(counts));
   const main = mainWeakness(counts);
   const mainCategory = CATEGORIES.find((c) => c.id === main);
@@ -21,7 +21,9 @@ export default function ErrorSummary({ counts, title = 'Why you missed them', sc
         ))}
       </ul>
       <p className="bars__main">
-        {mainCategory ? (
+        {pending > 0 ? (
+          <>Not final yet: {pending} {pending === 1 ? 'sentence is' : 'sentences are'} not confirmed. Only confirmed categories are counted.</>
+        ) : mainCategory ? (
           <>Main weakness {scope}: <strong>{mainCategory.label}</strong> <span lang="ko">{mainCategory.ko}</span></>
         ) : (
           `No missed words ${scope}.`
