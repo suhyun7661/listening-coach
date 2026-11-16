@@ -109,7 +109,7 @@ export default function DiagnosisReport() {
         <p className="muted">
           Accuracy = correct questions in the category ÷ all questions in the category. A group such as a key expression counts as one question.
           The lesson data has no category labels, so each question is assigned to a category by a fixed rule from the word itself, not from the
-          mistake categories you chose. Main Idea has no word-level question, so it shows “No questions” instead of 0%.
+          mistake categories you chose. A category with no questions shows “No questions” instead of 0%.
         </p>
       </section>
 

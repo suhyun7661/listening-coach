@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import * as local from './attemptStore';
-import { cleanTag } from './diagnosis';
+import { cleanTag, diagnoseSentence } from './diagnosis';
 import { dbGetAttempt, dbSaveAttempt, dbSetUserTag } from './attemptsDb';
 
 // One place for reports. Signed in: they live in your account (Supabase).
@@ -22,7 +22,7 @@ export async function saveAttempt(user, attempt) {
 }
 
 // Reports saved before the four-category change may hold UE, AC or OT.
-// UE (unfamiliar expression) becomes V (Vocabulary). AC and OT no longer exist: they are shown as
+// UE (unfamiliar expression) becomes V (Vocabulary). AC, OT and MI no longer exist: they are shown as
 // "not confirmed yet" so the learner can choose again. Nothing is deleted; only the way it is read changes.
 function normalizeAttempt(attempt) {
   if (!attempt) return attempt;
@@ -31,7 +31,13 @@ function normalizeAttempt(attempt) {
     const clean = cleanTag(tag);
     if (clean) userTags[sentenceId] = clean;
   });
-  const results = (attempt.results ?? []).map((row) => (row.autoTag ? { ...row, autoTag: cleanTag(row.autoTag) } : row));
+  // Old recommendations (for example Speed given for an empty answer) are worked out again with the current rules.
+  // An unclear sentence has no recommendation at all.
+  const results = (attempt.results ?? []).map((row) => {
+    const { autoTag, ...rest } = row;
+    const tag = diagnoseSentence(rest)?.tag;
+    return tag ? { ...rest, autoTag: tag } : rest;
+  });
   return { ...attempt, results, userTags };
 }
 
@@ -42,10 +48,10 @@ export async function getAttempt(user, id) {
   return found ? normalizeAttempt({ ...found, where: 'browser' }) : null;
 }
 
-// nextTags is keyed by sentence id: { s3: 'CS', ... }
+// nextTags is keyed by sentence id: { s3: 'CS', ... }. A sentence with no entry is "not confirmed".
 export async function setUserTag(user, attempt, sentenceId, nextTags) {
   if (attempt.where === 'account' && online(user)) {
-    await dbSetUserTag(attempt.id, sentenceId, nextTags[sentenceId]);
+    await dbSetUserTag(attempt.id, sentenceId, nextTags[sentenceId] ?? null);
   } else {
     local.saveUserTags(attempt.id, nextTags);
   }

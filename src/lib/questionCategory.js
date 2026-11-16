@@ -9,8 +9,6 @@ import { CATEGORIES } from './diagnosis';
 //   2. a contracted or reduced spoken form (I'm, don't, gonna, wanna) ... Connected Speech
 //   3. a short function word (the, to, can, did ...) ..................... Speed
 //   4. any other word (a content word) ................................... Vocabulary
-// Main Idea: none. The dictation asks for words and expressions, not for the gist of a sentence, so no
-// question is assigned to Main Idea. It shows "no questions" in the Diagnosis Report instead of an invented number.
 export function questionCategory(blank) {
   if (blank.isKeyWord || (blank.parts && blank.parts.length > 1)) return 'V';
   const w = normalize(blank.answer);
@@ -24,7 +22,6 @@ export const MAPPING_NOTE = {
   CS: 'reduced or contracted forms (I\'m, don\'t, gonna, wanna)',
   SP: 'short, fast function words (the, to, can, did)',
   V: 'key expressions and content words',
-  MI: 'no dictation question is assigned to this category',
 };
 
 // Accuracy per category from the real grading results of one attempt.

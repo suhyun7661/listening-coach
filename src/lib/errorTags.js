@@ -20,7 +20,7 @@ export function buildResults(sentences, tokensBySentence, answers) {
 
     const row = { sentenceId, number: si + 1, text: sentence.text, ko: sentence.ko, keyWords: sentence.keyWords ?? [], tokens };
     const diagnosis = diagnoseSentence(row);
-    if (diagnosis) {
+    if (diagnosis?.tag) { // no recommendation when the evidence is not enough
       row.autoTag = diagnosis.tag;
       row.tokens = tokens.map((t) => (t.type === 'blank' && isMiss(t) ? { ...t, autoTag: diagnosis.tag } : t));
     }

@@ -4,23 +4,25 @@ import { levenshtein, normalize } from './textUtils';
 
 // Diagnosis of a sentence the learner got wrong.
 // This is a rule-based analysis of the learner's ACTUAL answer compared with the correct one.
-// It only SUGGESTS a category: the learner confirms or changes it, and only the learner's choice is final.
-// It never claims to know what the learner heard; the wording is always cautious ("may have").
+//   - A mistaken sentence gets ONE primary cause at most (never several).
+//   - The app only RECOMMENDS a category when the answer gives real evidence. Otherwise it says "unclear"
+//     (tag = null) and never falls back to Speed or any other category.
+//   - A recommendation is never a confirmed diagnosis: only the learner's choice (userTag) is final.
+// The wording is always cautious ("may have").
 //
-// Four categories (the app has one accent, so there is no Accent category; an unfamiliar
-// expression counts as Vocabulary).
+// Three categories. (The app has one accent, an unfamiliar expression counts as Vocabulary,
+// and "main idea" is not a diagnosis because the dictation works word by word.)
 
 export const CATEGORIES = [
   { id: 'CS', label: 'Connected Speech', ko: '연음·축약', description: 'Words were linked or reduced in natural speech.' },
   { id: 'SP', label: 'Speed', ko: '속도', description: "Couldn't keep up with how fast the speaker talked." },
   { id: 'V', label: 'Vocabulary', ko: '어휘·표현', description: "Didn't know the word or expression." },
-  { id: 'MI', label: 'Main Idea', ko: '전체 의미 놓침', description: 'Lost the overall meaning of what was said.' },
 ];
 export const CATEGORY_IDS = CATEGORIES.map((c) => c.id);
 export const categoryById = (id) => CATEGORIES.find((c) => c.id === id);
 
 // Categories saved by earlier versions are mapped safely: an unfamiliar expression is Vocabulary;
-// Accent and Other no longer exist, so they become "not confirmed" and are asked again.
+// Accent, Other and Main Idea no longer exist, so they become "not confirmed" and the learner chooses again.
 const LEGACY = { UE: 'V' };
 export function cleanTag(tag) {
   if (!tag) return undefined;
@@ -34,15 +36,16 @@ const REDUCTIONS = new Set(['gonna', 'wanna', 'gotta', 'hafta', 'kinda', 'sorta'
 const squash = (s) => s.replace(/[ ']/g, '');
 const quote = (s) => `“${s}”`;
 
-// One missed blank (a word or a whole expression) -> { tag, kind } from the evidence in the answer.
+// One missed blank (a word or a whole expression) -> { tag, kind }.
+// tag is a category ONLY when the answer shows evidence; otherwise null (unclear).
 // kind: empty | merged | reduced | cutshort | partial | different | similar | unclear
 export function diagnoseMiss(blank) {
   const a = normalize(blank.userAnswer ?? '');
   const c = normalize(blank.answer);
-  const isExpression = Boolean(blank.isKeyWord);
   const isGroup = c.includes(' ');
 
-  if (!a) return { tag: isExpression ? 'V' : 'SP', kind: 'empty' };
+  // Nothing typed: it could be speed, a missing word or anything else. Not evidence by itself.
+  if (!a) return { tag: null, kind: 'empty' };
 
   // Connected speech needs evidence IN the answer: words stuck together or split, a reduced spelling, or a word cut short.
   if (a.split(' ').some((w) => REDUCTIONS.has(w)) && !REDUCTIONS.has(c)) return { tag: 'CS', kind: 'reduced' };
@@ -56,30 +59,42 @@ export function diagnoseMiss(blank) {
 
   const sim = 1 - levenshtein(squash(a), squash(c)) / Math.max(squash(a).length, squash(c).length);
   if (COLLOQUIAL.has(c)) return { tag: 'CS', kind: 'reduced-target' };
-  if (FUNCTION_WORDS.has(c)) return { tag: sim >= 0.5 ? 'CS' : 'SP', kind: sim >= 0.5 ? 'similar' : 'unclear' };
+  if (FUNCTION_WORDS.has(c)) return sim >= 0.5 ? { tag: 'CS', kind: 'similar' } : { tag: null, kind: 'unclear' };
   return { tag: 'V', kind: sim >= 0.5 ? 'similar' : 'different' };
 }
 
-const PRIORITY = ['V', 'CS', 'SP', 'MI'];
+const PRIORITY = ['CS', 'V', 'SP'];
 
-// A whole sentence -> one suggested category.
+const REASONS = {
+  CS: (m) => `You wrote ${quote(m.userAnswer.trim() || m.answer)} for ${quote(m.answer)}, which looks like words that were linked or reduced in fast speech.`,
+  V: (m) => `${quote(m.answer)} may be a word or expression you are not familiar with yet.`,
+  SP: () => 'Several parts were left empty or missed, so you may not have been able to keep up with the speed.',
+};
+
+// A whole sentence -> { tag, reason, items }. tag is null when there is not enough evidence ("unclear").
+// Only ONE primary category is ever returned.
 export function diagnoseSentence(row) {
-  const blanks = row.tokens.filter((t) => t.type === 'blank');
-  const misses = blanks.filter(isMiss);
+  const misses = row.tokens.filter((t) => t.type === 'blank' && isMiss(t));
   if (!misses.length) return null;
   const items = misses.map((m) => ({ blankId: m.blankId, ...diagnoseMiss(m) }));
 
-  // Most of a longer sentence missed: probably lost the thread.
-  if (blanks.length >= 3 && misses.length / blanks.length >= 0.6) return { tag: 'MI', items };
-
   const counts = {};
-  items.forEach((i) => { counts[i.tag] = (counts[i.tag] ?? 0) + 1; });
-  const tag = Object.keys(counts).sort((x, y) => counts[y] - counts[x] || PRIORITY.indexOf(x) - PRIORITY.indexOf(y))[0];
-  return { tag, items };
+  items.forEach((i) => { if (i.tag) counts[i.tag] = (counts[i.tag] ?? 0) + 1; });
+
+  // Speed needs several parts with no usable answer in the same sentence; one empty box alone proves nothing.
+  const noEvidence = items.filter((i) => !i.tag).length;
+  if (noEvidence >= 2) counts.SP = (counts.SP ?? 0) + noEvidence;
+
+  const tags = Object.keys(counts);
+  if (!tags.length) return { tag: null, reason: '', items };
+  const tag = tags.sort((x, y) => counts[y] - counts[x] || PRIORITY.indexOf(x) - PRIORITY.indexOf(y))[0];
+  const example = misses.find((m) => items.find((i) => i.blankId === m.blankId)?.tag === tag) ?? misses[0];
+  return { tag, reason: REASONS[tag](example), items };
 }
 
-// The saved suggestion (if it is still a valid category), otherwise worked out again from the answers.
-export const suggestedTag = (row) => cleanTag(row.autoTag) ?? diagnoseSentence(row)?.tag ?? 'SP';
+// The recommended category (never confirmed), or null when the evidence is not enough.
+export const suggestedTag = (row) => diagnoseSentence(row)?.tag ?? null;
+export const suggestedReason = (row) => diagnoseSentence(row)?.reason ?? '';
 
 // ---------------------------------------------------------------- Listening Guidance
 // Always built for the category that is selected NOW, so it changes the moment the learner picks another one.
@@ -117,7 +132,7 @@ export function guidance(tag, row) {
         listen: `First listen to the whole sentence without writing. Then replay it and look for the small, fast words (${missed || word}). Try repeating the sentence aloud at the speaker's pace.`,
         focus: 'Small, fast words at normal speed.',
       };
-    case 'V':
+    default: // V
       return expression
         ? {
             why: `The expression ${word} may be new to you${meaning ? ` (it means ${quote(meaning)})` : ''}. ${typed ? `You wrote ${typed}, so you may have caught only some of it.` : 'You left it empty.'}`,
@@ -129,11 +144,5 @@ export function guidance(tag, row) {
             listen: `Look up ${word} and say it aloud. Notice which syllable is stressed, then replay the sentence and listen for it.`,
             focus: `The sound and stress of ${word}.`,
           };
-    default: // MI
-      return {
-        why: 'You missed most of the blanks in this sentence, so you may have lost the thread of what was being said.',
-        listen: `Before writing anything, listen for the main point: who is talking about what? Check yourself with the Korean meaning: ${row.ko ? quote(row.ko) : 'see above'}.`,
-        focus: 'The main point first, the details second.',
-      };
   }
 }

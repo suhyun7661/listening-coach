@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import ErrorSummary from '../components/ErrorSummary';
 import ErrorTagPicker from '../components/ErrorTagPicker';
 import { computeScore, mainWeakness, spellingSlips, summarizeTags, wrongSentences } from '../lib/errorTags';
-import { categoryById, guidance, suggestedTag } from '../lib/diagnosis';
+import { categoryById, guidance, suggestedReason, suggestedTag } from '../lib/diagnosis';
 import { isMiss } from '../lib/grading';
 import { LEVEL_NAMES } from '../lib/blanks';
 import { getAttempt, setUserTag } from '../lib/attempts';
@@ -13,9 +13,10 @@ import { useAuth } from '../lib/AuthContext';
 // and a collapsible Listening Guidance that always follows the category that is selected now.
 function ReviewCard({ row, confirmed, onConfirm }) {
   const [open, setOpen] = useState(false);
-  const suggested = suggestedTag(row);
-  const selected = confirmed ?? suggested; // the guidance follows this
-  const tips = guidance(selected, row);
+  const suggested = suggestedTag(row); // null = the app is not sure
+  const reason = suggestedReason(row);
+  const selected = confirmed ?? suggested; // the guidance follows this (nothing selected = no guidance yet)
+  const tips = selected ? guidance(selected, row) : null;
   const misses = row.tokens.filter((t) => t.type === 'blank' && isMiss(t));
 
   const sentence = (mode) =>
@@ -54,14 +55,20 @@ function ReviewCard({ row, confirmed, onConfirm }) {
 
       <div className="review-row__miss">
         <p className="category-line">
-          <span>Suggested category: <strong className={`text--${suggested}`}>{categoryById(suggested).label}</strong></span>
+          <span>Suggested category: {suggested ? <strong className={`text--${suggested}`}>{categoryById(suggested).label}</strong> : <strong>Unclear (not sure)</strong>}</span>
           <span>Confirmed category: {confirmed ? <strong className={`text--${confirmed}`}>{categoryById(confirmed).label}</strong> : <em>not confirmed yet</em>}</span>
         </p>
         <p className="muted">
           {misses.length > 1 ? `${misses.length} parts of this sentence were missed. ` : ''}
-          This is a first guess from your answer, not a verdict. Tap the category that fits best; your choice is the final one.
+          {suggested
+            ? `${reason} This is only a guess from your answer, not a verdict.`
+            : 'There is not enough evidence in your answer to suggest a cause, so the app is not guessing. Choose the cause yourself, or leave it unconfirmed.'}
+          {' '}Your choice is the final one.
         </p>
         <ErrorTagPicker suggested={suggested} confirmed={confirmed} onChange={(tag) => onConfirm(row.sentenceId, tag)} label={`Mistake category for sentence ${row.number}`} />
+        {confirmed && (
+          <button type="button" className="linklike" onClick={() => onConfirm(row.sentenceId, null)}>Leave unconfirmed</button>
+        )}
       </div>
 
       <div className="guidance">
@@ -69,7 +76,12 @@ function ReviewCard({ row, confirmed, onConfirm }) {
           <span>Listening Guidance</span>
           <span aria-hidden="true">{open ? '−' : '+'}</span>
         </button>
-        {open && (
+        {open && !selected && (
+          <div className="guidance__body" aria-live="polite">
+            <p>Choose a category above and the guidance for it will appear here.</p>
+          </div>
+        )}
+        {open && selected && (
           <div className="guidance__body" aria-live="polite">
             <p className="guidance__for">
               For: <strong className={`text--${selected}`}>{categoryById(selected).label}</strong>{confirmed ? '' : ' (suggested, not confirmed yet)'}
@@ -131,7 +143,9 @@ export default function Review() {
 
   // The learner's confirmed category is saved next to the suggestion (userTag vs autoTag).
   async function confirm(sentenceId, tag) {
-    const next = { ...tagsRef.current, [sentenceId]: tag };
+    const next = { ...tagsRef.current };
+    if (tag) next[sentenceId] = tag;
+    else delete next[sentenceId]; // back to "not confirmed"
     tagsRef.current = next;
     setUserTags(next);
     setTagError('');
@@ -163,7 +177,7 @@ export default function Review() {
       {!complete && (
         <p id="diag-note" className="notice" role="status">
           Incomplete: {pending} of {wrong.length} mistaken {wrong.length === 1 ? 'sentence is' : 'sentences are'} not confirmed yet.
-          Confirm a category for each one to open the Diagnosis Report. Suggestions are not counted as confirmed.
+          Confirm a category for each one to open the Diagnosis Report. Suggestions and “unclear” sentences are not counted as confirmed.
         </p>
       )}
       {tagError && <p className="form__error" role="alert">{tagError}</p>}

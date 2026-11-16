@@ -19,7 +19,6 @@
 .tag--CS { background: var(--cs-bg); color: var(--cs-text); }
 .tag--SP { background: var(--sp-bg); color: var(--sp-text); }
 .tag--V  { background: var(--v-bg);  color: var(--v-text); }
-.tag--MI { background: var(--mi-bg); color: var(--mi-text); }
 
 .pill {
   display: inline-block;
@@ -188,7 +187,6 @@
 .bars__track { height: 8px; border-radius: var(--radius-pill); background: var(--surface-strong); overflow: hidden; }
 .bars__fill { display: block; height: 100%; border-radius: inherit; }
 .fill--SP { background: var(--sp-fill); } .fill--V { background: var(--v-fill); } .fill--CS { background: var(--cs-fill); }
-.fill--MI { background: var(--mi-fill); }
 .bars__count { font-weight: 700; text-align: right; }
 .bars__main { margin: 0 0 8px; }
 
@@ -212,7 +210,6 @@
 .tagpick__label { font-weight: 500; font-size: 13px; }
 .tagpick.is-selected { border-width: 2px; border-style: solid; border-color: currentColor; }
 .text--CS { color: var(--cs-text); } .text--SP { color: var(--sp-text); } .text--V { color: var(--v-text); }
-.text--MI { color: var(--mi-text); }
 
 /* ---------- Login and account ---------- */
 .page--narrow { max-width: 520px; }
