@@ -1,28 +1,48 @@
-/* Design tokens: every color, font and shape lives here. No black anywhere. */
+/* Design tokens: every color, font and shape lives here. Dark navy, business look. */
 :root {
-  --violet: #5b3df5;
-  --violet-light: #4a2fd9;
-  --violet-deep: #2e1f8f;
-  --coral: #ff6b4a;
-  --yellow: #ffe066;
-  --ink: #1e1650;
-  --muted: #5a5480;
-  --bg: #f5f3ff;
-  --border: #e4dffb;
-  --border-strong: #d6d0f5;
+  /* Surfaces */
+  --bg: #0b1120;
+  --bg-raised: #111a2e;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-strong: rgba(255, 255, 255, 0.1);
+  --video-bg: #060a14;
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.3);
+
+  /* Text */
+  --ink: #f2f4f9;
+  --muted: #a9b2c6;
+  --on-light: #0b1120;       /* text on white buttons */
   --white: #ffffff;
 
-  --cs-bg: #ede3ff; --cs-text: #5b2d9e;
-  --sp-bg: #ffe8d1; --sp-text: #8a4300;
-  --v-bg: #dce7ff;  --v-text: #1f3f99;
-  --ac-bg: #ddf3ea; --ac-text: #1e6b4a;
-  --mi-bg: #ffe0ec; --mi-text: #a3124f;
+  /* Meaning colors */
+  --accent: #7aa5ff;         /* links, highlights */
+  --ok: #5ccf9f;
+  --ok-bg: rgba(92, 207, 159, 0.16);
+  --bad: #ff8a94;
+  --bad-bg: rgba(255, 123, 134, 0.16);
+  --good-num: #5b9dff;       /* correct sentence number (blue) */
+  --bad-num: #ff6b78;        /* incorrect sentence number (red) */
+  --warn-bg: rgba(255, 214, 120, 0.14);
+  --focus: #9dbcff;
 
-  --font-en: 'Manrope', 'Noto Sans KR', system-ui, sans-serif;
-  --font-ko: 'Noto Sans KR', 'Manrope', system-ui, sans-serif;
+  /* The five error categories (background / text) */
+  --cs-bg: rgba(167, 139, 250, 0.2); --cs-text: #d3c3ff;
+  --sp-bg: rgba(255, 167, 102, 0.2); --sp-text: #ffc9a0;
+  --v-bg: rgba(107, 155, 255, 0.2);  --v-text: #b3ceff;
+  --ac-bg: rgba(92, 207, 159, 0.2);  --ac-text: #96e6c4;
+  --mi-bg: rgba(255, 123, 160, 0.2); --mi-text: #ffb3c9;
+  --cs-fill: #a78bfa; --sp-fill: #ffa766; --v-fill: #6b9bff; --ac-fill: #5ccf9f; --mi-fill: #ff7ba0;
 
-  --radius-button: 14px;
-  --radius-card: 16px;
+  /* Type */
+  --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-en: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  --font-ko: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+
+  /* Shape */
+  --radius-button: 999px;
+  --radius-card: 18px;
+  --radius-small: 10px;
   --radius-pill: 999px;
 
   --page-width: 1120px;

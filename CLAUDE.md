@@ -71,27 +71,21 @@ The site must work on laptops and phones (responsive).
 - There is no Admin page any more.
 - Testing: there is no automatic test suite in the repo. Changes are checked with the build, the helper scripts, scratch database tests kept outside the project, and manual checks in the browser.
 
-## Design system (match the approved screens in /reference/screens)
-Colors (no black anywhere):
-- Violet `#5B3DF5`: brand, header background, selected items, score card
-- Coral `#FF6B4A`: main buttons, active menu item, progress bars (text on coral is indigo)
-- Yellow `#FFE066`: highlights on violet (logo, score number)
-- Deep indigo `#1E1650`: all body text
-- Lavender `#F5F3FF`: page background
-- Border `#E4DFFB`, strong border `#D6D0F5`, muted text `#5A5480`
-- Deep violet `#2E1F8F`: video area
-- Lighter violet `#4A2FD9`: secondary buttons on violet
-Error tag colors (background / text):
-- CS `#EDE3FF` / `#5B2D9E`
-- SP `#FFE8D1` / `#8A4300`
-- V `#DCE7FF` / `#1F3F99`
-- AC `#DDF3EA` / `#1E6B4A`
-- MI `#FFE0EC` / `#A3124F`
-Type: Manrope (English) + Noto Sans KR (Korean), from Google Fonts.
-Shape: pill-shaped menu items, buttons with 14px corners, cards with 16px corners.
-Header: violet bar with logo "Listening Coach" in yellow, menu (Practice, Compete), account button; two soft decorative circles (coral and yellow) on the right.
-Clip thumbnails: each clip has its own bright color with a coral play button.
-Accessibility: visible keyboard focus, real buttons and labels, respect reduced motion.
+## Design system (v2, dark navy business look; decided 2026-11-16; replaces the old violet/coral design)
+The draft is the collage of 7 screens the owner provided (Home, Watch, Choose level, Dictation, Results, Review Report, Compete). Match its mood: dark, calm, professional, like the video.
+Colors (all in `src/styles/tokens.css`; dark theme only, no light/dark switch):
+- Page background deep navy `#0B1120` with soft blue glows; cards are glass-like (white at 5% opacity, thin light border, 18px corners)
+- Text `#F2F4F9`; muted text `#A9B2C6`
+- Primary button: WHITE pill with dark text `#0B1120`. Secondary: outlined pill (thin light border, white text)
+- Accent blue `#7AA5FF` (links, highlights); success green `#5CCF9F`; error red `#FF8A94`
+- Sentence numbers after grading: blue `#5B9DFF` = all blanks correct, red `#FF6B78` = any blank wrong
+- Error category tags (muted, tinted background / light text): CS purple, SP orange, V blue, AC green, MI pink (see tokens.css)
+- Every text/background pair must keep contrast of at least 4.5:1 (checked: lowest is 5.8:1)
+Type: serif headlines and logo (Cormorant Garamond), Inter for UI and body, Noto Sans KR for Korean, all from Google Fonts.
+Shape: pill-shaped buttons, thin borders, generous spacing, no decorative circles or bright colors.
+Header: slim dark bar, serif "Listening Coach" logo with a small headphones icon, plain text links (Practice, Compete) with an underline on the active one, account pill on the right.
+Home: a photo of the two characters (`public/images/hero.webp`) with the serif headline "Listen. Fill in. Improve.", the line "Sharpen your English with real conversations.", and two buttons (Practice Mode, Compete Mode).
+Accessibility: visible keyboard focus, real buttons and labels, respect reduced motion, works on phone width.
 
 ## Screens (v2)
 1. Home: only two big choices, Practice Mode and Compete Mode.

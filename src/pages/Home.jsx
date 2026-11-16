@@ -1,26 +1,25 @@
 import { Link } from 'react-router-dom';
-import { Icon } from '../components/Common';
 
-// The main screen: only two choices.
+// The main screen: a photo, a headline, and only two choices.
 export default function Home() {
   return (
     <div className="page">
-      <section className="mode-panel" aria-labelledby="mode-h">
-        <h1 id="mode-h" className="mode-panel__title">Choose a mode</h1>
-        <Link to="/practice" className="mode mode--practice">
-          <Icon name="pencil" />
-          <span>
-            <strong>Practice mode</strong>
-            <span>Watch the video, then fill in the blanks while you listen</span>
-          </span>
-        </Link>
-        <Link to="/compete" className="mode mode--compete">
-          <Icon name="trophy" />
-          <span>
-            <strong>Compete mode</strong>
-            <span>An expression quiz with a leaderboard</span>
-          </span>
-        </Link>
+      <section className="hero" aria-labelledby="hero-h">
+        <div className="hero__text">
+          <hr className="hero__rule" />
+          <h1 id="hero-h" className="hero__title">Listen.<br />Fill in.<br />Improve.</h1>
+          <p className="hero__sub">Sharpen your English with real conversations.</p>
+          <div className="hero__actions">
+            <Link to="/practice" className="btn btn--primary btn--lg">
+              <span>Practice Mode</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link to="/compete" className="btn btn--outline btn--lg">
+              <span>Compete Mode</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );
